@@ -1,4 +1,4 @@
-import { AxiosInstance, AxiosRequestConfig, CancelToken, Method } from 'axios';
+import { AxiosInstance, AxiosRequestConfig, CancelToken, Method, ResponseType } from 'axios';
 import { concatUint8Array, splitRangeArr } from './utils';
 
 enum TEST_METHOD {
@@ -29,14 +29,16 @@ export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptio
 
 		const contentLength = await testRangeSupport(axios, downOptions, axiosConfig);
 
-		let defaultResponseType = axiosConfig.responseType || 'json';
+		let defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
 
 		// not support
 		if (!contentLength) {
 			const data = await axios(axiosConfig);
 			return data;
 		} else {
-			const rangeArr = splitRangeArr(contentLength, downOptions.max);
+			// 如果长度小于并发量，以长度为准（此时每个并发下载 1 byte）
+			const max = contentLength < downOptions.max ? contentLength : downOptions.max;
+			const rangeArr = splitRangeArr(contentLength, max);
 
 			const data = await Promise.all(
 				rangeArr.map(r => {
