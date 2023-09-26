@@ -1,4 +1,5 @@
 import { AxiosInstance, AxiosRequestConfig, CancelToken, Method } from 'axios';
+import { concatUint8Array, splitRangeArr } from './utils';
 
 enum TEST_METHOD {
 	HEAD = 'head',
@@ -12,7 +13,7 @@ interface IDownOptions {
 
 const defaultOptions: IDownOptions = {
 	max: 3,
-	testMethod: TEST_METHOD.HEAD,
+	testMethod: TEST_METHOD.SELF,
 };
 
 declare module 'axios' {
@@ -28,12 +29,36 @@ export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptio
 
 		const contentLength = await testRangeSupport(axios, downOptions, axiosConfig);
 
-		console.log('contentLength', contentLength);
+		let defaultResponseType = axiosConfig.responseType || 'json';
 
 		// not support
 		if (!contentLength) {
-			return axios(axiosConfig);
+			const data = await axios(axiosConfig);
+			return data;
 		} else {
+			const rangeArr = splitRangeArr(contentLength, downOptions.max);
+
+			const data = await Promise.all(
+				rangeArr.map(r => {
+					const headers = {
+						...axiosConfig.headers,
+						Range: `bytes=${r}`,
+					};
+
+					return axios({ ...axiosConfig, headers, responseType: 'arraybuffer' });
+				}),
+			);
+			const uArr = concatUint8Array(data.map(v => v.data));
+			const string = new TextDecoder('utf-8').decode(uArr);
+
+			if (defaultResponseType === 'json') {
+				try {
+					return JSON.parse(string);
+				} catch (error) {
+					return string;
+				}
+			}
+			return string;
 		}
 	};
 
@@ -72,6 +97,7 @@ function testByHead(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 				// head  -> body = empty
 				const contentRange = resp.headers['content-range']; // bytes 0-0/104857607
 				const contentLength: 1 | '1' | undefined = resp.headers['content-length'];
+
 				if (contentLength == 1 && contentRange) {
 					resolve(Number(contentRange.split('/')[1]));
 				} else {
@@ -93,6 +119,7 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 				resp.data.on('data', (chunk: any) => {
 					const contentRange = resp.headers['content-range']; // bytes 0-0/104857607
 					const contentLength: 1 | '1' | undefined = resp.headers['content-length'];
+
 					if (contentLength == 1 && contentRange) {
 						resolve(Number(contentRange.split('/')[1]));
 					} else {
