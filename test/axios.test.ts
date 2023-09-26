@@ -29,7 +29,7 @@ describe('Range is support', () => {
 		const f = testFile('100M.test');
 		const url = testUrl('100M.test');
 		makeBigFile(f, 100 * 1024 * 1024);
-		const data = await axios.down({ url });
+		const data = await axios.down({ url, responseType: 'text' });
 		const _md5File = await md5File(f);
 		const _md5String = md5String(data);
 		expect(_md5File === _md5String).toBe(true);
