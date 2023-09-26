@@ -30,3 +30,19 @@ export function splitRangeArr(n: number, m: number): string[] {
 
 	return result;
 }
+
+export function concatUint8Array(arr: Uint8Array[]) {
+	let length = 0;
+	arr.forEach(v => {
+		length += v.length;
+	});
+
+	let mergedArray = new Uint8Array(length);
+	let offset = 0;
+	arr.forEach(v => {
+		mergedArray.set(v, offset);
+		offset += v.length;
+	});
+
+	return mergedArray;
+}
