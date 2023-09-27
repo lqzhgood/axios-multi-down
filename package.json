@@ -1,7 +1,43 @@
 {
+	"name": "AxiosMultiDown",
+	"author": "lqzh",
+	"license": "MIT",
+	"version": "0.0.1",
+	"description": "Axios plugin, Speed up the download process by using multiple Axios requests to fetch a single file.",
+	"keywords": [
+		"AxiosMultiDown",
+		"axios",
+		"multiple",
+		"download"
+	],
+	"homepage": "https://github.com/lqzhgood/axios-multi-down",
+	"bugs": {
+		"url": "https://github.com/lqzhgood/axios-multi-down/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/lqzhgood/axios-multi-down.git"
+	},
+	"files": [
+		"lib",
+		"src"
+	],
+	"main": "./lib/index.umd.js",
+	"module": "./lib/index.es.js",
+	"exports": {
+		".": {
+			"types": "./src/types/axios-down.d.ts",
+			"import": "./lib/index.es.js",
+			"require": "./lib/index.umd.js"
+		},
+		"./*": "./*"
+	},
+	"typings": "src/types/axios-down.d.ts",
 	"scripts": {
+		"dev": "vite",
 		"test": "jest",
-		"server": "ts-node .\\test\\http-server.ts"
+		"server": "ts-node test\\utils\\startServer.ts",
+		"build": "vue-tsc --noEmit && vite build"
 	},
 	"devDependencies": {
 		"@jest/globals": "^29.7.0",
@@ -13,7 +49,9 @@
 		"eslint-plugin-prettier": "^5.0.0",
 		"prettier": "^3.0.3",
 		"ts-jest": "^29.1.1",
-		"typescript": "^5.2.2"
+		"typescript": "^5.2.2",
+		"vite": "^4.4.9",
+		"vite-plugin-dts": "^3.6.0"
 	},
 	"dependencies": {
 		"axios": "^1.5.0",

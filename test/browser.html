@@ -7,35 +7,13 @@
     <meta name="renderer" content="webkit" />
     <meta http-equiv="Cache-Control" content="no-siteapp" />
     <title>browser test</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.js"></script>
-
 </head>
 
 <body>
 
-    <script>
-        axios({
-            url: "http://d.info.hns5j.com/100M.test",
-            transformResponse: [function (data) {
-                console.log('data.length', data.length);
-                return data;
-            }]
-        }).then((d) => {
-            console.log('d', d);
-        }).catch((err) => {
-            console.log('err', err);
-        })
-        axios({
-            url: "http://d.info.hns5j.com/100M.test",
-            headers: {
-                Range: 'bytes=0-99'
-            }
-        }).then((d) => {
-            console.log('d', d);
-        }).catch((err) => {
-            console.log('err', err);
-        })
-    </script>
+
+    <script src="./browser.ts" type="module"></script>
+
 </body>
 
 </html>
