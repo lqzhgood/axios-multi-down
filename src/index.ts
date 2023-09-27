@@ -1,4 +1,4 @@
-import { AxiosInstance, AxiosRequestConfig, CancelToken, Method, ResponseType } from 'axios';
+import { AxiosInstance, AxiosRequestConfig, ResponseType } from 'axios';
 import { concatUint8Array, splitRangeArr } from './utils';
 import type { IDownOptions, testContentLength } from './types/axios-down';
 
@@ -12,7 +12,7 @@ const defaultOptions: IDownOptions = {
 	testMethod: TEST_METHOD.HEAD,
 };
 
-function axiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOptions): AxiosInstance {
+function AxiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOptions): AxiosInstance {
 	axios.down = async function (configOrUrl, axiosConfig) {
 		if (typeof configOrUrl === 'string') {
 			axiosConfig = axiosConfig || {};
@@ -25,7 +25,7 @@ function axiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOpt
 
 		const contentLength = await testRangeSupport(axios, downOptions, axiosConfig);
 
-		let defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
+		const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
 		if (!contentLength) {
 			// server not support range
 			const { data } = await axios(axiosConfig);
@@ -99,19 +99,20 @@ function testByHead(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 					resolve(null);
 				}
 			})
-			.catch(err => {
+			.catch(() => {
 				resolve(null);
 			});
 	});
 }
 
 function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): Promise<testContentLength> {
-	return new Promise((resolve, reject) => {
+	return new Promise(resolve => {
 		const controller = new AbortController();
 
 		axios({ ...testAxiosConfig, signal: controller.signal, responseType: 'stream' })
 			.then(resp => {
-				resp.data.on('data', (chunk: any) => {
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				resp.data.on('data', (chunk: unknown) => {
 					const contentRange = resp.headers['content-range']; // bytes 0-0/104857607
 					const contentLength: 1 | '1' | undefined = resp.headers['content-length'];
 
@@ -131,4 +132,4 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 
 // setTimeout(() => {}, 1000000);
 
-export default axiosMultiDown;
+export default AxiosMultiDown;
