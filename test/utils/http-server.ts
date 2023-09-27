@@ -11,6 +11,7 @@ export function testServer(port: number): Promise<http.Server> {
 			res.setHeader('Access-Control-Allow-Origin', '*');
 			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
 			res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+			res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
 			if (req.method === 'OPTIONS') {
 				res.statusCode = 204;
 				res.end();
