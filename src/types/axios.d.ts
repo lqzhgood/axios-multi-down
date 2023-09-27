@@ -1,9 +1,12 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-declare module 'axios' {
-	interface AxiosInstance {
-		down: any;
-	}
+// TODO return is not AxiosResponse
+interface AxiosDownMethod {
+	<T = any, R = AxiosResponse<T>, D = any>(configOrUrl: string | AxiosRequestConfig<D>, config?: AxiosRequestConfig<D>): Promise<string>;
 }
 
-export default axios;
+declare module 'axios' {
+	interface AxiosInstance {
+		down: AxiosDownMethod;
+	}
+}

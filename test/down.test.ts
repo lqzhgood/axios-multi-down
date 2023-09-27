@@ -42,7 +42,7 @@ describe('test down method', () => {
 
 		test('range support', async () => {
 			const url = testUrl('100M.test', true);
-			const data = await axios.down({ url, responseType: 'text' });
+			const data = await axios.down(url, { responseType: 'text' });
 			const _md5String = md5String(data);
 			expect(_md5File === _md5String).toBe(true);
 		});
@@ -72,7 +72,7 @@ describe('test down method', () => {
 
 		test('range support', async () => {
 			const url = testUrl('sample.json', true);
-			const data = await axios.down({ url }); // default  responseType: 'json'
+			const data = await axios.down(url); // default  responseType: 'json'
 			expect(_.isEqual(o, data)).toBe(true);
 		});
 

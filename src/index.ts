@@ -13,18 +13,18 @@ interface IDownOptions {
 
 const defaultOptions: IDownOptions = {
 	max: 3,
-	testMethod: TEST_METHOD.SELF,
+	testMethod: TEST_METHOD.HEAD,
 };
 
-declare module 'axios' {
-	interface AxiosInstance {
-		down: any;
-	}
-}
-
-// d.info.hns5j.com/100M.test
 export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOptions): AxiosInstance {
-	axios.down = async function <D = any>(axiosConfig: AxiosRequestConfig<D>) {
+	axios.down = async function (configOrUrl, axiosConfig) {
+		if (typeof configOrUrl === 'string') {
+			axiosConfig = axiosConfig || {};
+			axiosConfig.url = configOrUrl;
+		} else {
+			axiosConfig = configOrUrl || {};
+		}
+
 		const downOptions: IDownOptions = { ...defaultOptions, ...options };
 
 		const contentLength = await testRangeSupport(axios, downOptions, axiosConfig);
@@ -42,7 +42,7 @@ export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptio
 			const data = await Promise.all(
 				rangeArr.map(r => {
 					const headers = {
-						...axiosConfig.headers,
+						...(axiosConfig?.headers || {}),
 						Range: `bytes=${r}`,
 					};
 
@@ -59,7 +59,7 @@ export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptio
 					return string;
 				}
 			}
-			return string;
+			return string; // TODO return is not Promise<string>
 		}
 	};
 
