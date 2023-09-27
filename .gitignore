@@ -131,3 +131,5 @@ dist
 
 
 100M.test
+!test/files/browser.html
+test/files/
