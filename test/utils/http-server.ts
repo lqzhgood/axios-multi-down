@@ -7,8 +7,18 @@ const DIR_PUBLIC = '../../';
 export function testServer(port: number): Promise<http.Server> {
 	return new Promise(resolve => {
 		const s = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
-			const u = new URL(req.url || '', `http://127.0.0.1:${port}`);
+			// 跨域
+			res.setHeader('Access-Control-Allow-Origin', '*');
+			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+			res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+			if (req.method === 'OPTIONS') {
+				res.statusCode = 204;
+				res.end();
+				return;
+			}
+
 			// 获取请求的文件路径
+			const u = new URL(req.url || '', `http://127.0.0.1:${port}`);
 			const filePath: string = path.join(__dirname, DIR_PUBLIC, u.pathname || '');
 
 			// 读取文件
