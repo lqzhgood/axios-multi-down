@@ -1,14 +1,10 @@
 import { AxiosInstance, AxiosRequestConfig, CancelToken, Method, ResponseType } from 'axios';
 import { concatUint8Array, splitRangeArr } from './utils';
+import type { IDownOptions, testContentLength } from './types/axios-down';
 
 enum TEST_METHOD {
 	HEAD = 'head',
 	SELF = 'self',
-}
-
-interface IDownOptions {
-	max: number;
-	testMethod: TEST_METHOD.HEAD | TEST_METHOD.SELF;
 }
 
 const defaultOptions: IDownOptions = {
@@ -16,7 +12,7 @@ const defaultOptions: IDownOptions = {
 	testMethod: TEST_METHOD.HEAD,
 };
 
-export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOptions): AxiosInstance {
+function axiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOptions): AxiosInstance {
 	axios.down = async function (configOrUrl, axiosConfig) {
 		if (typeof configOrUrl === 'string') {
 			axiosConfig = axiosConfig || {};
@@ -30,8 +26,8 @@ export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptio
 		const contentLength = await testRangeSupport(axios, downOptions, axiosConfig);
 
 		let defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
-		// not support
 		if (!contentLength) {
+			// server not support range
 			const { data } = await axios(axiosConfig);
 			return data;
 		} else {
@@ -65,8 +61,6 @@ export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptio
 
 	return axios;
 }
-
-type testContentLength = number | null;
 
 async function testRangeSupport<D>(axios: AxiosInstance, downOptions: IDownOptions, axiosConfig: AxiosRequestConfig<D>) {
 	const { testMethod } = downOptions;
@@ -135,4 +129,6 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 	});
 }
 
-setTimeout(() => {}, 1000000);
+// setTimeout(() => {}, 1000000);
+
+export default axiosMultiDown;
