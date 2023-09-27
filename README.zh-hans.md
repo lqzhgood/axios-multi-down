@@ -4,7 +4,7 @@
 
 <p align="center">Axios plugin, Speed up the download process by using multiple `Axios` requests to fetch a single file.</p>
 
-**English** | [中文](./README.zh-hans.md)
+**中文** | [English](./README.md)
 
 ## 测试
 
