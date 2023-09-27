@@ -30,10 +30,9 @@ export default function axiosMultiDown(axios: AxiosInstance, options: IDownOptio
 		const contentLength = await testRangeSupport(axios, downOptions, axiosConfig);
 
 		let defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
-
 		// not support
 		if (!contentLength) {
-			const data = await axios(axiosConfig);
+			const { data } = await axios(axiosConfig);
 			return data;
 		} else {
 			// 如果长度小于并发量，以长度为准（此时每个并发下载 1 byte）
