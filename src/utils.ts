@@ -1,3 +1,5 @@
+import { IBlockState } from './types/axios-down';
+
 export enum Platform {
 	NODE,
 	Browser,
@@ -11,8 +13,6 @@ export const platform = (() => {
 		return Platform.NODE;
 	}
 })();
-
-console.log('platform', platform);
 
 /**
  * @name:切割符合 Range 格式的数组
@@ -47,10 +47,29 @@ export function splitRangeArr(n: number, m: number): string[] {
 	return result;
 }
 
-export function concatUint8Array(arr: Uint8Array[]) {
-	if (platform === Platform.Browser) {
-		arr = (arr as ArrayBuffer[]).map(v => new Uint8Array(v)) as Uint8Array[];
+export function splitArr(l: number, size: number): IBlockState[] {
+	if (l <= 0 || size <= 0) {
+		throw new Error('参数错误');
 	}
+	const result = [];
+
+	const parts = Math.ceil(l / size);
+
+	for (let i = 0; i < parts; i++) {
+		if (i !== parts - 1) {
+			result.push({ s: size * i, e: size * (i + 1) - 1 });
+		} else {
+			result.push({ s: size * i, e: l - 1 });
+		}
+	}
+
+	return result;
+}
+
+export function concatUint8Array(arr: Uint8Array[]) {
+	// if (platform === Platform.Browser) {
+	// 	arr = (arr as ArrayBuffer[]).map(v => new Uint8Array(v));
+	// }
 
 	const length = arr.reduce((pre, cV) => pre + cV.length, 0);
 
