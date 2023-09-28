@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { splitRangeArr } from '../src/utils';
+import { splitArr, splitRangeArr } from '../src/utils';
 
 describe('splitRangeArr', () => {
 	test('10 / 1', () => {
@@ -35,5 +35,81 @@ describe('splitRangeArr', () => {
 	});
 	test('10 / 11', () => {
 		expect(splitRangeArr(10, 11)).toStrictEqual(['0-']);
+	});
+});
+describe('splitArr', () => {
+	test('10 / 1', () => {
+		expect(splitArr(10, 1)).toStrictEqual([
+			{ s: 0, e: 0 },
+			{ s: 1, e: 1 },
+			{ s: 2, e: 2 },
+			{ s: 3, e: 3 },
+			{ s: 4, e: 4 },
+			{ s: 5, e: 5 },
+			{ s: 6, e: 6 },
+			{ s: 7, e: 7 },
+			{ s: 8, e: 8 },
+			{ s: 9, e: 9 },
+		]);
+	});
+	test('10 / 2', () => {
+		expect(splitArr(10, 2)).toStrictEqual([
+			{ s: 0, e: 1 },
+			{ s: 2, e: 3 },
+			{ s: 4, e: 5 },
+			{ s: 6, e: 7 },
+			{ s: 8, e: 9 },
+		]);
+	});
+	test('10 / 3', () => {
+		expect(splitArr(10, 3)).toStrictEqual([
+			{ s: 0, e: 2 },
+			{ s: 3, e: 5 },
+			{ s: 6, e: 8 },
+			{ s: 9, e: 9 },
+		]);
+	});
+	test('10 / 4', () => {
+		expect(splitArr(10, 4)).toStrictEqual([
+			{ s: 0, e: 3 },
+			{ s: 4, e: 7 },
+			{ s: 8, e: 9 },
+		]);
+	});
+	test('10 / 5', () => {
+		expect(splitArr(10, 5)).toStrictEqual([
+			{ s: 0, e: 4 },
+			{ s: 5, e: 9 },
+		]);
+	});
+	test('10 / 6', () => {
+		expect(splitArr(10, 6)).toStrictEqual([
+			{ s: 0, e: 5 },
+			{ s: 6, e: 9 },
+		]);
+	});
+	test('10 / 7', () => {
+		expect(splitArr(10, 7)).toStrictEqual([
+			{ s: 0, e: 6 },
+			{ s: 7, e: 9 },
+		]);
+	});
+	test('10 / 8', () => {
+		expect(splitArr(10, 8)).toStrictEqual([
+			{ s: 0, e: 7 },
+			{ s: 8, e: 9 },
+		]);
+	});
+	test('10 / 9', () => {
+		expect(splitArr(10, 9)).toStrictEqual([
+			{ s: 0, e: 8 },
+			{ s: 9, e: 9 },
+		]);
+	});
+	test('10 / 10', () => {
+		expect(splitArr(10, 10)).toStrictEqual([{ s: 0, e: 9 }]);
+	});
+	test('10 / 11', () => {
+		expect(splitArr(10, 11)).toStrictEqual([{ s: 0, e: 9 }]);
 	});
 });
