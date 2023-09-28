@@ -42,15 +42,17 @@ describe('test down method', () => {
 
 		test('range support', async () => {
 			const url = testUrl('100M.test', true);
-			const data = await axios.down(url, { responseType: 'text' });
+			const { data, isMulti } = await axios.down(url, { responseType: 'text' });
 			const _md5String = md5String(data);
+			expect(isMulti).toBe(true);
 			expect(_md5File === _md5String).toBe(true);
 		});
 
 		test('range not support', async () => {
 			const url = testUrl('100M.test', false);
-			const data = await axios.down({ url, responseType: 'text' });
+			const { data, isMulti } = await axios.down({ url, responseType: 'text' });
 			const _md5String = md5String(data);
+			expect(isMulti).toBe(false);
 			expect(_md5File === _md5String).toBe(true);
 		});
 	});
@@ -72,13 +74,15 @@ describe('test down method', () => {
 
 		test('range support', async () => {
 			const url = testUrl('sample.json', true);
-			const data = await axios.down(url); // default  responseType: 'json'
+			const { data, isMulti } = await axios.down(url); // default  responseType: 'json'
+			expect(isMulti).toBe(true);
 			expect(_.isEqual(o, data)).toBe(true);
 		});
 
 		test('range not support', async () => {
 			const url = testUrl('sample.json', false);
-			const data = await axios.down({ url }); // default  responseType: 'json'
+			const { data, isMulti } = await axios.down({ url }); // default  responseType: 'json'
+			expect(isMulti).toBe(false);
 			expect(_.isEqual(o, data)).toBe(true);
 		});
 	});

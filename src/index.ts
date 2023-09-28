@@ -28,8 +28,8 @@ function AxiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOpt
 		const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
 		if (!contentLength) {
 			// server not support range
-			const { data } = await axios(axiosConfig);
-			return data;
+			const res = await axios(axiosConfig);
+			return { ...res, isMulti: false };
 		} else {
 			// 如果长度小于并发量，以长度为准（此时每个并发下载 1 byte）
 			const max = contentLength < downOptions.max ? contentLength : downOptions.max;
@@ -50,12 +50,12 @@ function AxiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOpt
 
 			if (defaultResponseType === 'json') {
 				try {
-					return JSON.parse(string);
+					return { data: JSON.parse(string), isMulti: true };
 				} catch (error) {
-					return string;
+					return { data: string, isMulti: true };
 				}
 			}
-			return string; // TODO return is not Promise<string>
+			return { data: string, isMulti: true };
 		}
 	};
 
