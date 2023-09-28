@@ -32,33 +32,33 @@ describe('test down method', () => {
 	axiosMultiDown(axios);
 
 	describe('test big file', () => {
-		let _md5File: string;
+		const fileName = '100M.test';
 
-		beforeEach(async () => {
-			const f = testFile('100M.test');
-			makeBigFile(f, 100 * 1024 * 1024);
-			_md5File = await md5File(f);
-		});
+		const f = testFile(fileName);
+		makeBigFile(f, 100 * 1024 * 1024);
+		const _md5File = md5File(f);
 
 		test('range support', async () => {
-			const url = testUrl('100M.test', true);
+			const url = testUrl(fileName, true);
 			const { data, isMulti } = await axios.down(url, { responseType: 'text' });
 			const _md5String = md5String(data);
 			expect(isMulti).toBe(true);
-			expect(_md5File === _md5String).toBe(true);
+			expect(_md5File).toBe(_md5String);
 		});
 
 		test('range not support', async () => {
-			const url = testUrl('100M.test', false);
+			const url = testUrl(fileName, false);
 			const { data, isMulti } = await axios.down({ url, responseType: 'text' });
 			const _md5String = md5String(data);
 			expect(isMulti).toBe(false);
-			expect(_md5File === _md5String).toBe(true);
+			expect(_md5File).toBe(_md5String);
 		});
 	});
 
 	describe('test json', () => {
-		const f = testFile('sample.json');
+		const fileName = 'sample.json';
+
+		const f = testFile(fileName);
 		const o = {
 			a: 123,
 			b: true,
@@ -73,17 +73,17 @@ describe('test down method', () => {
 		fs.writeFileSync(f, JSON.stringify(o));
 
 		test('range support', async () => {
-			const url = testUrl('sample.json', true);
+			const url = testUrl(fileName, true);
 			const { data, isMulti } = await axios.down(url); // default  responseType: 'json'
 			expect(isMulti).toBe(true);
-			expect(_.isEqual(o, data)).toBe(true);
+			expect(o).toStrictEqual(data);
 		});
 
 		test('range not support', async () => {
-			const url = testUrl('sample.json', false);
+			const url = testUrl(fileName, false);
 			const { data, isMulti } = await axios.down({ url }); // default  responseType: 'json'
 			expect(isMulti).toBe(false);
-			expect(_.isEqual(o, data)).toBe(true);
+			expect(o).toStrictEqual(data);
 		});
 	});
 });

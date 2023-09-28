@@ -3,24 +3,9 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import { execSync } from 'child_process';
 
-export function md5File(filePath: string): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const hash = crypto.createHash('md5');
-		const stream = fs.createReadStream(filePath);
-
-		stream.on('data', data => {
-			hash.update(data);
-		});
-
-		stream.on('end', () => {
-			const md5sum = hash.digest('hex');
-			resolve(md5sum);
-		});
-
-		stream.on('error', error => {
-			reject(error);
-		});
-	});
+export function md5File(filePath: string): string {
+	const file = fs.readFileSync(filePath, 'utf-8');
+	return md5String(file);
 }
 
 export function md5String(s: string): string {
