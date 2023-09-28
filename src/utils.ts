@@ -1,3 +1,19 @@
+export enum Platform {
+	NODE,
+	Browser,
+}
+
+// @ts-ignore
+export const platform = (() => {
+	if (typeof window === 'object') {
+		return Platform.Browser;
+	} else if (Object.prototype.toString.call(process) === '[object process]') {
+		return Platform.NODE;
+	}
+})();
+
+console.log('platform', platform);
+
 /**
  * @name:切割符合 Range 格式的数组
  * @description: 尽量均分，多余的分配到前 m 项中
@@ -32,10 +48,11 @@ export function splitRangeArr(n: number, m: number): string[] {
 }
 
 export function concatUint8Array(arr: Uint8Array[]) {
-	let length = 0;
-	arr.forEach(v => {
-		length += v.length;
-	});
+	if (platform === Platform.Browser) {
+		arr = (arr as ArrayBuffer[]).map(v => new Uint8Array(v)) as Uint8Array[];
+	}
+
+	const length = arr.reduce((pre, cV) => pre + cV.length, 0);
 
 	let mergedArray = new Uint8Array(length);
 	let offset = 0;
