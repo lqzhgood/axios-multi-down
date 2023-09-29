@@ -2,17 +2,20 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 interface IDownOptions {
 	max: number;
+	blockSize: number;
 	testMethod?: TEST_METHOD.HEAD | TEST_METHOD.SELF;
 }
 
-interface IAxiosDownResponse<T = any, D = any> {
-	data: T;
-	status: number;
-	statusText: string;
-	headers: RawAxiosResponseHeaders | AxiosResponseHeaders;
-	config: InternalAxiosRequestConfig<D>;
-	request?: any;
+interface IBlockState {
+	s: number;
+	e: number;
+	data?: Uint8Array;
+}
+
+interface IAxiosDownResponse<T = any, D = any> extends AxiosResponse<T, D> {
 	isMulti: boolean;
+	queue: IBlockState[];
+	downOptions: IDownOptions;
 }
 
 type testContentLength = number | null;

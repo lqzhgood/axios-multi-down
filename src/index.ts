@@ -1,6 +1,6 @@
-import { AxiosInstance, AxiosRequestConfig, ResponseType } from 'axios';
-import { concatUint8Array, splitRangeArr } from './utils';
-import type { IDownOptions, testContentLength } from './types/axios-down';
+import { AxiosInstance, AxiosRequestConfig, AxiosResponse, ResponseType } from 'axios';
+import { concatUint8Array, splitArr, splitRangeArr } from './utils';
+import type { IAxiosDownResponse, IBlockState, IDownOptions, testContentLength } from './types/axios-down';
 
 enum TEST_METHOD {
 	HEAD = 'head',
@@ -9,11 +9,13 @@ enum TEST_METHOD {
 
 const defaultOptions: IDownOptions = {
 	max: 3,
+	blockSize: 10 * 1024 * 1024, // 10M
 	testMethod: TEST_METHOD.HEAD,
 };
 
-function AxiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOptions): AxiosInstance {
-	axios.down = async function (configOrUrl, axiosConfig) {
+function AxiosMultiDown(axios: AxiosInstance, options: Partial<IDownOptions> = defaultOptions): AxiosInstance {
+	// @ts-ignore
+	axios.down = async function <T = any, D = any>(configOrUrl: string | AxiosRequestConfig<D>, axiosConfig: AxiosRequestConfig<D>): Promise<R> {
 		if (typeof configOrUrl === 'string') {
 			axiosConfig = axiosConfig || {};
 			axiosConfig.url = configOrUrl;
@@ -23,39 +25,17 @@ function AxiosMultiDown(axios: AxiosInstance, options: IDownOptions = defaultOpt
 
 		const downOptions: IDownOptions = { ...defaultOptions, ...options };
 
-		const contentLength = await testRangeSupport(axios, downOptions, axiosConfig);
+		const contentLength = await testRangeSupport<D>(axios, downOptions, axiosConfig);
 
-		const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
 		if (!contentLength) {
 			// server not support range
-			const res = await axios(axiosConfig);
-			return { ...res, isMulti: false };
+			const res = await axios<T, any>(axiosConfig);
+			const queueRes: IBlockState[] = [{ s: 0, e: res.headers['content-length'] - 1, data: res.data }];
+			const downResponse = { ...res, isMulti: false, downOptions, queue: queueRes };
+			return downResponse;
 		} else {
-			// 如果长度小于并发量，以长度为准（此时每个并发下载 1 byte）
-			const max = contentLength < downOptions.max ? contentLength : downOptions.max;
-			const rangeArr = splitRangeArr(contentLength, max);
-
-			const data = await Promise.all(
-				rangeArr.map(r => {
-					const headers = {
-						...(axiosConfig?.headers || {}),
-						Range: `bytes=${r}`,
-					};
-
-					return axios({ ...axiosConfig, headers, responseType: 'arraybuffer' });
-				}),
-			);
-			const uArr = concatUint8Array(data.map(v => v.data));
-			const string = new TextDecoder('utf-8').decode(uArr);
-
-			if (defaultResponseType === 'json') {
-				try {
-					return { data: JSON.parse(string), isMulti: true };
-				} catch (error) {
-					return { data: string, isMulti: true };
-				}
-			}
-			return { data: string, isMulti: true };
+			const r = await downByMulti<T, D>(axios, contentLength, axiosConfig, downOptions);
+			return r;
 		}
 	};
 
@@ -127,6 +107,86 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 			.catch(() => {
 				resolve(null);
 			});
+	});
+}
+
+function downByMulti<T = any, D = any>(axios: AxiosInstance, contentLength: number, axiosConfig: AxiosRequestConfig<D>, downOptions: IDownOptions): Promise<IAxiosDownResponse<T>> {
+	return new Promise((resolveAll, rejectAll) => {
+		let downResponse: IAxiosDownResponse<T>;
+
+		const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
+
+		const queueRes = splitArr(contentLength, downOptions.blockSize);
+		const max = downOptions.max <= queueRes.length ? downOptions.max : queueRes.length;
+
+		let curr = 0;
+		let active = 0;
+		const queueDown: (() => Promise<IAxiosDownResponse<T>>)[] = queueRes.map(r => {
+			const fn = (): Promise<IAxiosDownResponse<T>> =>
+				new Promise((resolve, reject) => {
+					curr++;
+					active++;
+
+					const headers = {
+						...(axiosConfig?.headers || {}),
+						Range: `bytes=${r.s}-${r.e}`,
+					};
+
+					axios<ArrayBuffer, any>({ ...axiosConfig, headers, responseType: 'arraybuffer' })
+						.then(res => {
+							// TODO add emit
+
+							r.data = res.data instanceof ArrayBuffer ? new Uint8Array(res.data) : res.data;
+
+							// 第一个请求作为 down response
+							if (!downResponse) {
+								// 部分 data 没意义 清除
+								res.data = null;
+								downResponse = {
+									...res,
+									isMulti: true,
+									downOptions,
+									queue: queueRes,
+								};
+							}
+
+							// 最后一个请求
+							if (curr === queueDown.length && active === 1) {
+								res.data = concatUint8Array(queueRes.map(v => v.data!));
+								if (defaultResponseType === 'json') {
+									try {
+										res.data = new TextDecoder('utf-8').decode(res.data);
+										res.data = JSON.parse(res.data);
+									} catch (error: any) {
+										console.log('is not json error.message', error.message);
+									}
+								}
+
+								downResponse.data = res.data;
+								downResponse.status = 200;
+								resolveAll(downResponse);
+							}
+
+							resolve(downResponse);
+						})
+						.catch(err => {
+							//
+							rejectAll(err);
+						})
+						.finally(() => {
+							active--;
+							if (curr < queueDown.length && (active < max || max === 1)) {
+								queueDown[curr]();
+							}
+						});
+				});
+
+			return fn;
+		});
+
+		for (let i = 0; i < max; i++) {
+			queueDown[i]();
+		}
 	});
 }
 

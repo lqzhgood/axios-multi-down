@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import axiosBase from 'axios';
 import _ from 'lodash';
 
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from '@jest/globals';
+import { afterAll, beforeAll, beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import { testServer } from './utils/http-server';
 import { makeBigFile, md5File, md5String } from './utils';
@@ -29,7 +29,9 @@ afterAll(() => {
 
 describe('test down method', () => {
 	const axios = axiosBase.create({});
-	axiosMultiDown(axios);
+	axiosMultiDown(axios, {
+		blockSize: 10 * 1024 * 1024,
+	});
 
 	describe('test big file', () => {
 		const fileName = '100M.test';
@@ -37,6 +39,8 @@ describe('test down method', () => {
 		const f = testFile(fileName);
 		makeBigFile(f, 100 * 1024 * 1024);
 		const _md5File = md5File(f);
+
+		jest.setTimeout(5 * 1000);
 
 		test('range support', async () => {
 			const url = testUrl(fileName, true);
