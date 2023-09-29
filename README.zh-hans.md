@@ -8,7 +8,7 @@
 
 ## Installation
 
-```js
+```
 npm i axios-multi-down
 ```
 
@@ -22,13 +22,11 @@ const axios = axiosBase.create({});
 
 AxiosMultiDown(axios);
 
-axios
-	.down('http://example.com/test')
+axios.down('http://example.com/test')
 	.then(result => {})
 	.catch(err => {});
 
-axios
-	.down('http://example.com/test', {
+axios.down('http://example.com/test', {
 		method: 'get',
 		headers: { 'X-Requested-With': 'XMLHttpRequest' },
 		// ...AxiosRequestConfig
@@ -36,8 +34,7 @@ axios
 	.then(result => {})
 	.catch(err => {});
 
-axios
-	.down({
+axios.down({
 		url: 'http://example.com/test',
 		method: 'post',
 		data: {
@@ -55,7 +52,7 @@ axios
 
 ```
 AxiosMultiDown( axios )
-AxiosMultiDown( axios [ , DownOptions ] ) // Global
+AxiosMultiDown( axios [ , DownOptions ] ) // Global DownOptions
 ```
 
 > axios.down
@@ -71,12 +68,12 @@ axios.down( url [ , AxiosRequestConfig ] )
 | Name       | Type        | Default            | Description                                                                       | remark                                                                                    |
 | ---------- | ----------- | ------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | max        | `Number`    | `3`                | 最大同时进行的下载数量                                                            | \*1                                                                                       |
-|            |
 | blockSize  | `Number`    | `10 * 1024 * 1024` | 单个下载块的大小                                                                  | 单位 byte                                                                                 |
 | testMethod | `head self` | `head`             | 用于探测服务器是否支持 `Range` 的方法， self 代表使用 `AxiosRequestConfig.method` | 如果使用 self 注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
 
 ```
-*1 max 会被改写，规则如下
+*1
+> max 会被改写，规则如下
 
 blockLength = Math.ceil( contentLength / blockSize );
 max = max <= blockLength ? max : blockLength;
