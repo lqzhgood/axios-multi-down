@@ -2,11 +2,11 @@
 
 <h1 align="center">axios-multi-down</h1>
 
-<p align="center">Axios插件，通过 [Range](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range) 特性， 将 __大文件__ 分割，并发多个 “Axios” 请求加快大文件下载速度。</p>
+<p align="center">Axios插件，通过 <a href='https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range' target='_blank'>Range</a> 特性， 将 __大文件__ 分割，并发多个 “Axios” 请求加快大文件下载速度。</p>
 
 **中文** | [English](./README.md)
 
-## Installation
+## 安装
 
 ```
 npm i axios-multi-down
