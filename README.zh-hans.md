@@ -2,7 +2,7 @@
 
 <h1 align="center">axios-multi-down</h1>
 
-<p align="center">Axios plugin, Speed up the download process by using multiple `Axios` requests to fetch a single file.</p>
+<p align="center">Axios插件，通过 [Range](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range) 特性， 将 __大文件__ 分割，并发多个 “Axios” 请求加快大文件下载速度。</p>
 
 **中文** | [English](./README.md)
 
@@ -84,6 +84,11 @@ max 会被改写为 2 -> [ 0-8 , 9-9 ]
 ```
 
 ## 注意事项
+
+#### 不支持 Range
+
+如果资源不支持 [Range](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range)，将自动回退使 `axios.down === axios` 并返回结果
+
 
 #### 跨域 CORS
 
