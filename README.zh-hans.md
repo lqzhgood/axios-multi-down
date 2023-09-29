@@ -6,10 +6,84 @@
 
 **中文** | [English](./README.md)
 
-## 测试
+## Installation
+
+```js
+npm i axios-multi-down
+```
+
+## 使用
+
+```js
+import axiosBase from 'axios';
+import AxiosMultiDown from 'axios-multi-down';
+
+const axios = axiosBase.create({});
+
+AxiosMultiDown(axios);
+
+axios
+	.down('http://example.com/test')
+	.then(result => {})
+	.catch(err => {});
+
+axios
+	.down('http://example.com/test', {
+		method: 'get',
+		headers: { 'X-Requested-With': 'XMLHttpRequest' },
+		// ...AxiosRequestConfig
+	})
+	.then(result => {})
+	.catch(err => {});
+
+axios
+	.down({
+		url: 'http://example.com/test',
+		method: 'post',
+		data: {
+			firstName: 'Fred',
+		},
+		// ...AxiosRequestConfig
+	})
+	.then(result => {})
+	.catch(err => {});
+```
+
+## Api
+
+> AxiosMultiDown
 
 ```
-npm run test
+AxiosMultiDown( axios )
+AxiosMultiDown( axios [ , DownOptions ] ) // Global
+```
+
+> axios.down
+
+```
+axios.down( url )
+axios.down( AxiosRequestConfig )
+axios.down( url [ , AxiosRequestConfig ] )
+```
+
+> DownOptions
+
+| Name       | Type        | Default            | Description                                                                       | remark                                                                                    |
+| ---------- | ----------- | ------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| max        | `Number`    | `3`                | 最大同时进行的下载数量                                                            | \*1                                                                                       |
+|            |
+| blockSize  | `Number`    | `10 * 1024 * 1024` | 单个下载块的大小                                                                  | 单位 byte                                                                                 |
+| testMethod | `head self` | `head`             | 用于探测服务器是否支持 `Range` 的方法， self 代表使用 `AxiosRequestConfig.method` | 如果使用 self 注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
+
+```
+*1 max 会被改写，规则如下
+
+blockLength = Math.ceil( contentLength / blockSize );
+max = max <= blockLength ? max : blockLength;
+
+如  contentLength = 10 , max = 5, blockSize = 9;
+max 会被改写为 2 -> [ 0-8 , 9-9 ]
+
 ```
 
 ## 注意事项
@@ -20,4 +94,15 @@ npm run test
 
 docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
 
-> res.setHeader('Access-Control-Expose-Headers', 'Authorization, Content-Range');
+> res.setHeader('Access-Control-Expose-Headers', '$OtherHeaders, Content-Range');
+
+## 测试
+
+```
+npm run test
+```
+
+## TODO
+
+-   [ ] `responseType` 使用 `steam` 获取更好的性能
+    -   需要 `axios` 使用 `fetch` 作为 `adapter` 才可让浏览器支持
