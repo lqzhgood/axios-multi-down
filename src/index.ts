@@ -28,13 +28,17 @@ function AxiosMultiDown(axios: AxiosInstance, options: Partial<IDownOptions> = d
 		const contentLength = await testRangeSupport<D>(axios, downOptions, axiosConfig);
 
 		if (!contentLength) {
-			// server not support range
-			const res = await axios<T, any>(axiosConfig);
-			const queueRes: IBlockState[] = [{ s: 0, e: res.headers['content-length'] - 1, data: res.data }];
-			const downResponse = { ...res, isMulti: false, downOptions, queue: queueRes };
-			return downResponse;
+			const r = await downByOne<T, D>(axios, axiosConfig, downOptions);
+			return r;
 		} else {
-			const r = await downByMulti<T, D>(axios, contentLength, axiosConfig, downOptions);
+			const queueRes = splitArr(contentLength, downOptions.blockSize);
+			downOptions.max = downOptions.max <= queueRes.length ? downOptions.max : queueRes.length;
+			let r;
+			if (downOptions.max === 1) {
+				r = await downByOne<T, D>(axios, axiosConfig, downOptions);
+			} else {
+				r = await downByMulti<T, D>(axios, axiosConfig, downOptions, queueRes);
+			}
 			return r;
 		}
 	};
@@ -110,14 +114,17 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 	});
 }
 
-function downByMulti<T = any, D = any>(axios: AxiosInstance, contentLength: number, axiosConfig: AxiosRequestConfig<D>, downOptions: IDownOptions): Promise<IAxiosDownResponse<T>> {
+async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downOptions: IDownOptions): Promise<IAxiosDownResponse<T>> {
+	const res = await axios<T, any>(axiosConfig);
+	const queueRes: IBlockState[] = [{ s: 0, e: res.headers['content-length'] - 1, data: res.data }];
+	const downResponse = { ...res, isMulti: false, downOptions, queue: queueRes };
+	return downResponse;
+}
+
+function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downOptions: IDownOptions, queueRes: IBlockState[]): Promise<IAxiosDownResponse<T>> {
 	return new Promise((resolveAll, rejectAll) => {
 		let downResponse: IAxiosDownResponse<T>;
-
 		const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
-
-		const queueRes = splitArr(contentLength, downOptions.blockSize);
-		const max = downOptions.max <= queueRes.length ? downOptions.max : queueRes.length;
 
 		let curr = 0;
 		let active = 0;
@@ -175,7 +182,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, contentLength: numb
 						})
 						.finally(() => {
 							active--;
-							if (curr < queueDown.length && (active < max || max === 1)) {
+							if (curr < queueDown.length && (active < downOptions.max || downOptions.max === 1)) {
 								queueDown[curr]();
 							}
 						});
@@ -184,7 +191,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, contentLength: numb
 			return fn;
 		});
 
-		for (let i = 0; i < max; i++) {
+		for (let i = 0; i < downOptions.max; i++) {
 			queueDown[i]();
 		}
 	});
