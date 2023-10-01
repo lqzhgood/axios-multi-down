@@ -3,7 +3,7 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios';
 interface IDownConfig<T = number | string> {
     max: number;
     blockSize: T;
-    testMethod: TEST_METHOD.HEAD | TEST_METHOD.SELF;
+    testMethod: TEST_METHOD;
 }
 
 interface IBlockState {

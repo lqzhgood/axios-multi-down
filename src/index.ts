@@ -1,6 +1,6 @@
 import { AxiosInstance, AxiosRequestConfig, ResponseType } from 'axios';
-import { checkDownConfig, concatUint8Array, splitArr } from './utils';
-import { TEST_METHOD, downConfigDefault } from './const';
+import { checkDownConfig, concatUint8Array, platform, splitArr } from './utils';
+import { PLATFORM, TEST_METHOD, downConfigDefault } from './const';
 import type { IAxiosDownResponse, IBlockState, IDownConfig, testContentLength } from './types/axios-down';
 
 function AxiosMultiDown(axios: AxiosInstance, downConfigGlobal: Partial<IDownConfig> = downConfigDefault): AxiosInstance {
@@ -46,7 +46,7 @@ function AxiosMultiDown(axios: AxiosInstance, downConfigGlobal: Partial<IDownCon
             if (downConfigUse.max === 1) {
                 r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
             } else {
-                r = await downByMulti<T, D>(axios, axiosConfig, downConfigUse, queueRes);
+                r = await downByMulti<T, D>(axios, axiosConfig, downConfigUse, queueRes, contentLength);
             }
             return r;
         }
@@ -69,7 +69,7 @@ async function testRangeSupport<D>(axios: AxiosInstance, downConfig: IDownConfig
 
     let contentLength: testContentLength = null;
 
-    if (testMethod === TEST_METHOD.HEAD) {
+    if (testMethod === TEST_METHOD.HEAD || platform === PLATFORM.Browser) {
         contentLength = await testByHead(axios, testAxiosConfig);
     } else {
         contentLength = await testBySelf(axios, testAxiosConfig);
@@ -130,7 +130,7 @@ async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestCo
     return downResponse;
 }
 
-function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig, queueRes: IBlockState[]): Promise<IAxiosDownResponse<T>> {
+function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig, queueRes: IBlockState[], totalContentLength: number): Promise<IAxiosDownResponse<T>> {
     return new Promise((resolveAll, rejectAll) => {
         let downResponse: IAxiosDownResponse<T>;
         const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
@@ -148,7 +148,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
                         Range: `bytes=${r.s}-${r.e}`,
                     };
 
-                    axios<ArrayBuffer, any>({ ...axiosConfig, headers, responseType: 'arraybuffer' })
+                    axios<any>({ ...axiosConfig, headers, responseType: 'arraybuffer' })
                         .then(res => {
                             // TODO add emit
 
@@ -158,6 +158,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
                             if (!downResponse) {
                                 // 部分 data 没意义 清除
                                 res.data = null;
+                                // @ts-ignore
                                 downResponse = {
                                     ...res,
                                     isMulti: true,
@@ -187,9 +188,16 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
                                         break;
                                 }
 
-                                downResponse.config = res.config;
-                                downResponse.data = res.data;
+                                downResponse = {
+                                    ...res,
+                                    isMulti: true,
+                                    downConfig,
+                                    queue: queueRes,
+                                };
+
                                 downResponse.status = 200;
+                                downResponse.statusText = 'OK';
+                                downResponse.headers['content-type'] = totalContentLength;
                                 resolveAll(downResponse);
                             }
 

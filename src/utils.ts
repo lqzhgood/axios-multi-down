@@ -1,17 +1,11 @@
-import { TEST_METHOD } from './const';
+import { PLATFORM, TEST_METHOD } from './const';
 import { IBlockState, IDownConfig } from './types/axios-down';
 
-export enum Platform {
-    NODE,
-    Browser,
-}
-
-// @ts-ignore
 export const platform = (() => {
     if (typeof window === 'object') {
-        return Platform.Browser;
+        return PLATFORM.Browser;
     } else if (Object.prototype.toString.call(process) === '[object process]') {
-        return Platform.NODE;
+        return PLATFORM.NODE;
     }
 })();
 

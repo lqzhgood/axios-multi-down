@@ -74,23 +74,56 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 
 defaultDownConfig => /src/const.ts
 
-| Name       | Type        | Default            | Description                                                                                                   | remark                                                                                                                     |
-| ---------- | ----------- | ------------------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| max        | `Number`    | `3`                | The maximum number of simultaneous downloads                                                                  | \*1                                                                                                                        |
-| blockSize  | `Number`    | `10 * 1024 * 1024` | The size of individual download blocks                                                                        | unit `byte`                                                                                                                |
-| testMethod | `head self` | `head`             | HTTP method used to check if the server supports the `Range` header.， self means `AxiosRequestConfig.method` | If using `self`, please be aware of idempotence [Idempotent](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
+| Name       | Type        | Default            | Description                                                                                                       | remark                                                                                                                     |
+| ---------- | ----------- | ------------------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| max        | `Number`    | `3`                | The maximum number of simultaneous downloads                                                                      | \*1                                                                                                                        |
+| blockSize  | `Number`    | `10 * 1024 * 1024` | The size of individual download blocks                                                                            | unit `byte`                                                                                                                |
+| testMethod | `head self` | `head`             | \*2 HTTP method used to check if the server supports the `Range` header.， self means `AxiosRequestConfig.method` | If using `self`, please be aware of idempotence [Idempotent](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
 
 ```
 *1
-> Max will be overwritten, following these rules:
+    > Max will be overwritten, following these rules:
 
-blockLength = Math.ceil( contentLength / blockSize );
-max = max <= blockLength ? max : blockLength;
+    blockLength = Math.ceil( contentLength / blockSize );
+    max = max <= blockLength ? max : blockLength;
 
-如  contentLength = 10 , max = 5, blockSize = 9;
-max will be overwritten 2 -> [ 0-8 , 9-9 ]
+    如  contentLength = 10 , max = 5, blockSize = 9;
+    max will be overwritten 2 -> [ 0-8 , 9-9 ]
+
+*2
+    The browser environment will enforce the use of the HEAD method because 'responseType === 'stream'' is not currently supported.
 
 ```
+
+> IAxiosDownResponse
+
+axios.down(url).then(( resp: IAxiosDownResponse extends AxiosResponse )=>{})
+
+```js
+resp = {
+    ...axiosResponse,
+    isMulti: boolean; // Is it downloaded through multiple requests?
+    queue: [  // request result queue
+        {
+            s: number; // block start position
+            e: number; // block end position
+            data?: Uint8Array; // if finish, request result data
+        }
+        ...
+    ];
+    downConfig: IDownConfig;
+}
+
+```
+
+The `...axiosResponse` portion will be overwritten twice
+
+-   in first completed `axios` requests.
+-   in last completed `axios` requests,
+    -   other modify
+        -   resp.status = 200;
+        -   resp.statusText = 'OK';
+        -   resp.headers['content-type'] = totalContentLength;
 
 ## Important
 

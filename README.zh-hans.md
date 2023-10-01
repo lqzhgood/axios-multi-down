@@ -74,23 +74,56 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 
 defaultDownConfig => /src/const.ts
 
-| Name       | Type        | Default            | Description                                                                           | remark                                                                                         |
-| ---------- | ----------- | ------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| max        | `Number`    | `3`                | 最大同时进行下载的数量                                                                | \*1                                                                                            |
-| blockSize  | `Number`    | `10 * 1024 * 1024` | 单个下载的块大小                                                                      | 单位 `byte`                                                                                    |
-| testMethod | `head self` | `head`             | 用于探测服务器是否支持 `Range` 的HTTP方法， self 代表使用 `AxiosRequestConfig.method` | 如果使用 `self`, 请注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
+| Name       | Type        | Default            | Description                                                                               | remark                                                                                         |
+| ---------- | ----------- | ------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| max        | `Number`    | `3`                | 最大同时进行下载的数量                                                                    | \*1                                                                                            |
+| blockSize  | `Number`    | `10 * 1024 * 1024` | 单个下载的块大小                                                                          | 单位 `byte`                                                                                    |
+| testMethod | `head self` | `head`             | \*2 用于探测服务器是否支持 `Range` 的HTTP方法， self 代表使用 `AxiosRequestConfig.method` | 如果使用 `self`, 请注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
 
 ```
 *1
-> max 会被改写，规则如下
+    > max 会被改写，规则如下
 
-blockLength = Math.ceil( contentLength / blockSize );
-max = max <= blockLength ? max : blockLength;
+    blockLength = Math.ceil( contentLength / blockSize );
+    max = max <= blockLength ? max : blockLength;
 
-如  contentLength = 10 , max = 5, blockSize = 9;
-max 会被改写为 2 -> [ 0-8 , 9-9 ]
+    如  contentLength = 10 , max = 5, blockSize = 9;
+    max 会被改写为 2 -> [ 0-8 , 9-9 ]
+
+*2
+    浏览器环境将强制使用 HEAD 方法，因为当前不支持 responseType === 'steam'
 
 ```
+
+> IAxiosDownResponse
+
+axios.down(url).then(( resp: IAxiosDownResponse extends AxiosResponse )=>{})
+
+```js
+resp = {
+    ...axiosResponse,
+    isMulti: boolean; // Is it downloaded through multiple requests?
+    queue: [  // request result queue
+        {
+            s: number; // block start position
+            e: number; // block end position
+            data?: Uint8Array; // if finish, request result data
+        }
+        ...
+    ];
+    downConfig: IDownConfig;
+}
+
+```
+
+`...axiosResponse` 部分将被覆写两次
+
+-   第一次完成 `axios` 请求.
+-   最后一次完成 `axios` 请求,
+    -   其他修改
+        -   resp.status = 200;
+        -   resp.statusText = 'OK';
+        -   resp.headers['content-type'] = totalContentLength;
 
 ## 注意事项
 
