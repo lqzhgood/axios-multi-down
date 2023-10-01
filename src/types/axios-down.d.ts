@@ -1,5 +1,11 @@
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 
+type EventEmitter = {
+    on(event: string, listener: (...args: any[]) => void): void;
+    emit(event: string, ...args: any[]): void;
+    off(event: string, listener: (...args: any[]) => void): void;
+};
+
 interface IDownConfig<T = number | string> {
     max: number;
     blockSize: T;
