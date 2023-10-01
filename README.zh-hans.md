@@ -23,30 +23,30 @@ const axios = axiosBase.create({});
 AxiosMultiDown(axios);
 
 axios
-	.down('http://example.com/test')
-	.then(result => {})
-	.catch(err => {});
+    .down('http://example.com/test')
+    .then(result => {})
+    .catch(err => {});
 
 axios
-	.down('http://example.com/test', {
-		method: 'get',
-		headers: { 'X-Requested-With': 'XMLHttpRequest' },
-		// ...AxiosRequestConfig
-	})
-	.then(result => {})
-	.catch(err => {});
+    .down('http://example.com/test', {
+        method: 'get',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        // ...AxiosRequestConfig
+    })
+    .then(result => {})
+    .catch(err => {});
 
 axios
-	.down({
-		url: 'http://example.com/test',
-		method: 'post',
-		data: {
-			firstName: 'Fred',
-		},
-		// ...AxiosRequestConfig
-	})
-	.then(result => {})
-	.catch(err => {});
+    .down({
+        url: 'http://example.com/test',
+        method: 'post',
+        data: {
+            firstName: 'Fred',
+        },
+        // ...AxiosRequestConfig
+    })
+    .then(result => {})
+    .catch(err => {});
 ```
 
 ## Api

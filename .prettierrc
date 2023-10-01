@@ -4,7 +4,7 @@
 	"htmlWhitespaceSensitivity": "ignore",
 	"singleQuote": true,
 	"jsxSingleQuote": true,
-	"useTabs": true,
+	"useTabs": false,
 	"tabWidth": 4,
 	"printWidth": 9999999
 }
