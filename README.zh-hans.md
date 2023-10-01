@@ -51,14 +51,14 @@ axios
 
 ## Api
 
-> AxiosMultiDown
+#### AxiosMultiDown
 
 ```
 AxiosMultiDown( axios )
 AxiosMultiDown( axios [ , DownConfig ] ) // Global DownConfig
 ```
 
-> axios.down
+#### axios.down
 
 ```
 axios.down( url )
@@ -70,9 +70,9 @@ axios.down( AxiosRequestConfig , DownConfig )
 axios.down( url , AxiosRequestConfig, DownConfig )
 ```
 
-> DownConfig
+#### DownConfig
 
-defaultDownConfig => /src/const.ts
+> defaultDownConfig => /src/const.ts
 
 | Name       | Type                     | Default | Description                                                                           | remark                                                                                             |
 | ---------- | ------------------------ | ------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -95,7 +95,7 @@ defaultDownConfig => /src/const.ts
 
 ```
 
-> IBlockData
+#### IBlockData
 
 ```js
 interface IBlockData {
@@ -107,9 +107,9 @@ interface IBlockData {
 }
 ```
 
-> IAxiosDownResponse
+#### IAxiosDownResponse
 
-axios.down(url).then(( resp: IAxiosDownResponse extends AxiosResponse )=>{})
+> axios.down(url).then(( resp: IAxiosDownResponse extends AxiosResponse )=>{})
 
 ```js
 resp = {
