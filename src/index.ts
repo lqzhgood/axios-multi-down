@@ -127,8 +127,8 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig): Promise<IAxiosDownResponse<T>> {
     const resp = await axios<T, any>(axiosConfig);
     const blockData: IBlockData = { s: 0, e: resp.headers['content-length'] - 1, i: 0, resp: resp };
-    downConfig?.emitter.emit('data', blockData);
-    downConfig?.emitter.emit('end');
+    downConfig.emitter?.emit('data', blockData);
+    downConfig.emitter?.emit('end');
     const queue: IBlockData[] = [blockData];
     const downResponse = { ...resp, isMulti: false, downConfig, queue: queue };
 
@@ -158,7 +158,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
                             resp.data = resp.data instanceof ArrayBuffer ? new Uint8Array(resp.data) : resp.data;
 
                             r.resp = resp;
-                            downConfig?.emitter.emit('data', r);
+                            downConfig.emitter?.emit('data', r);
 
                             // 第一个请求作为 down response
                             if (!downResponse) {
@@ -172,7 +172,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
 
                             // 最后一个请求
                             if (curr === queueDown.length && active === 1) {
-                                downConfig?.emitter.emit('end');
+                                downConfig.emitter?.emit('end');
                                 resp.data = concatUint8Array(
                                     queueRes.map(v => {
                                         return v.resp!.data;
