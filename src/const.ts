@@ -12,6 +12,6 @@ export enum PLATFORM {
 
 export const downConfigDefault: IDownConfig = {
     max: 3,
-    blockSize: 10 * 1024 * 1024, // 10M
+    blockSize: '10M', // 10 * 1024 * 1024
     testMethod: TEST_METHOD.HEAD,
 };

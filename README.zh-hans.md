@@ -74,11 +74,11 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 
 defaultDownConfig => /src/const.ts
 
-| Name       | Type        | Default            | Description                                                                               | remark                                                                                         |
-| ---------- | ----------- | ------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| max        | `Number`    | `3`                | 最大同时进行下载的数量                                                                    | \*1                                                                                            |
-| blockSize  | `Number`    | `10 * 1024 * 1024` | 单个下载的块大小                                                                          | 单位 `byte`                                                                                    |
-| testMethod | `head self` | `head`             | \*2 用于探测服务器是否支持 `Range` 的HTTP方法， self 代表使用 `AxiosRequestConfig.method` | 如果使用 `self`, 请注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
+| Name       | Type                     | Default | Description                                                                               | remark                                                                                         |
+| ---------- | ------------------------ | ------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| max        | `Number`                 | `3`     | 最大同时进行下载的数量                                                                    | \*1                                                                                            |
+| blockSize  | `Number` `K` `B` `G` `T` | `10M`   | 单个下载的块大小                                                                          | 单位 `byte`                                                                                    |
+| testMethod | `head self`              | `head`  | \*2 用于探测服务器是否支持 `Range` 的HTTP方法， self 代表使用 `AxiosRequestConfig.method` | 如果使用 `self`, 请注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
 
 ```
 *1

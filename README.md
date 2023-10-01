@@ -74,11 +74,11 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 
 defaultDownConfig => /src/const.ts
 
-| Name       | Type        | Default            | Description                                                                                                       | remark                                                                                                                     |
-| ---------- | ----------- | ------------------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| max        | `Number`    | `3`                | The maximum number of simultaneous downloads                                                                      | \*1                                                                                                                        |
-| blockSize  | `Number`    | `10 * 1024 * 1024` | The size of individual download blocks                                                                            | unit `byte`                                                                                                                |
-| testMethod | `head self` | `head`             | \*2 HTTP method used to check if the server supports the `Range` header.， self means `AxiosRequestConfig.method` | If using `self`, please be aware of idempotence [Idempotent](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
+| Name       | Type                     | Default | Description                                                                                                       | remark                                                                                                                     |
+| ---------- | ------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| max        | `Number`                 | `3`     | The maximum number of simultaneous downloads                                                                      | \*1                                                                                                                        |
+| blockSize  | `Number` `K` `B` `G` `T` | `10M`   | The size of individual download blocks                                                                            | unit `byte`                                                                                                                |
+| testMethod | `head self`              | `head`  | \*2 HTTP method used to check if the server supports the `Range` header.， self means `AxiosRequestConfig.method` | If using `self`, please be aware of idempotence [Idempotent](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
 
 ```
 *1
