@@ -95,6 +95,18 @@ defaultDownConfig => /src/const.ts
 
 ```
 
+> IBlockData
+
+```js
+interface IBlockData {
+    s: number; // block start position
+    e: number; // block end position
+    i: number; // block index
+    resp?: AxiosResponse;
+        resp.data: Uint8Array; // block data, in multi down, type is Uint8Array
+}
+```
+
 > IAxiosDownResponse
 
 axios.down(url).then(( resp: IAxiosDownResponse extends AxiosResponse )=>{})
@@ -103,14 +115,7 @@ axios.down(url).then(( resp: IAxiosDownResponse extends AxiosResponse )=>{})
 resp = {
     ...axiosResponse,
     isMulti: boolean; // Is it downloaded through multiple requests?
-    queue: [  // request result queue
-        {
-            s: number; // block start position
-            e: number; // block end position
-            data?: Uint8Array; // if finish, request result data
-        }
-        ...
-    ];
+    queue: IBlockData[];
     downConfig: IDownConfig;
 }
 
@@ -124,6 +129,17 @@ resp = {
         -   resp.status = 200;
         -   resp.statusText = 'OK';
         -   resp.headers['content-type'] = totalContentLength;
+
+## 事件
+
+```js
+const emitter = new AxiosMultiDown.EventEmitter();
+emitter.on('data', (data: IBlockData)=>{})
+emitter.on('end', ()=>{})
+
+axios.down( '/test', {} , { emitter } )
+
+```
 
 ## 注意事项
 

@@ -9,6 +9,17 @@ AxiosMultiDown(axios, {
 });
 
 console.time('use range');
+
+const emitter = new AxiosMultiDown.EventEmitter();
+emitter.emit('data', 11111111111111111);
+emitter.on('data', d => {
+    console.log('emit data', d);
+});
+
+emitter.on('end', d => {
+    console.log('emit end', d);
+});
+
 axios
     .down(
         {
@@ -17,6 +28,8 @@ axios
         },
         {
             testMethod: 'self',
+            blockSize: 1,
+            emitter,
         },
     )
     // .down('http://127.0.0.1:3000/test/files/sample.json?useRange=1')
@@ -30,15 +43,15 @@ axios
         console.timeEnd('use range');
     });
 
-console.time('not use range');
-axios
-    .down('http://127.0.0.1:3000/test/files/100M.test')
-    .then(d => {
-        console.log('d', d);
-    })
-    .catch(err => {
-        console.log('err', err);
-    })
-    .finally(() => {
-        console.timeEnd('not use range');
-    });
+// console.time('not use range');
+// axios
+//     .down('http://127.0.0.1:3000/test/files/100M.test')
+//     .then(d => {
+//         console.log('d', d);
+//     })
+//     .catch(err => {
+//         console.log('err', err);
+//     })
+//     .finally(() => {
+//         console.timeEnd('not use range');
+//     });

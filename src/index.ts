@@ -1,7 +1,8 @@
 import { AxiosInstance, AxiosRequestConfig, ResponseType } from 'axios';
 import { checkDownConfig, concatUint8Array, platform, splitArr } from './utils';
 import { PLATFORM, TEST_METHOD, downConfigDefault } from './const';
-import type { IAxiosDownResponse, IBlockState, IDownConfig, testContentLength } from './types/axios-down';
+import type { IAxiosDownResponse, IBlockData, IDownConfig, testContentLength } from './types/axios-down';
+import { EventEmitter } from './emit';
 
 function AxiosMultiDown(axios: AxiosInstance, downConfigGlobal: Partial<IDownConfig> = downConfigDefault): AxiosInstance {
     axios.down = async function <T = any, D = any>(configOrUrl: string | AxiosRequestConfig<D>, config?: AxiosRequestConfig<D> | Partial<IDownConfig>, downConfig?: Partial<IDownConfig>): Promise<IAxiosDownResponse<T, D>> {
@@ -124,13 +125,17 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 }
 
 async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig): Promise<IAxiosDownResponse<T>> {
-    const res = await axios<T, any>(axiosConfig);
-    const queueRes: IBlockState[] = [{ s: 0, e: res.headers['content-length'] - 1, data: res.data }];
-    const downResponse = { ...res, isMulti: false, downConfig, queue: queueRes };
+    const resp = await axios<T, any>(axiosConfig);
+    const blockData: IBlockData = { s: 0, e: resp.headers['content-length'] - 1, i: 0, resp: resp };
+    downConfig?.emitter.emit('data', blockData);
+    downConfig?.emitter.emit('end');
+    const queue: IBlockData[] = [blockData];
+    const downResponse = { ...resp, isMulti: false, downConfig, queue: queue };
+
     return downResponse;
 }
 
-function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig, queueRes: IBlockState[], totalContentLength: number): Promise<IAxiosDownResponse<T>> {
+function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig, queueRes: IBlockData[], totalContentLength: number): Promise<IAxiosDownResponse<T>> {
     return new Promise((resolveAll, rejectAll) => {
         let downResponse: IAxiosDownResponse<T>;
         const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
@@ -149,18 +154,16 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
                     };
 
                     axios<any>({ ...axiosConfig, headers, responseType: 'arraybuffer' })
-                        .then(res => {
-                            // TODO add emit
+                        .then(resp => {
+                            resp.data = resp.data instanceof ArrayBuffer ? new Uint8Array(resp.data) : resp.data;
 
-                            r.data = res.data instanceof ArrayBuffer ? new Uint8Array(res.data) : res.data;
+                            r.resp = resp;
+                            downConfig?.emitter.emit('data', r);
 
                             // 第一个请求作为 down response
                             if (!downResponse) {
-                                // 部分 data 没意义 清除
-                                res.data = null;
-                                // @ts-ignore
                                 downResponse = {
-                                    ...res,
+                                    ...resp,
                                     isMulti: true,
                                     downConfig,
                                     queue: queueRes,
@@ -169,27 +172,32 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
 
                             // 最后一个请求
                             if (curr === queueDown.length && active === 1) {
-                                res.data = concatUint8Array(queueRes.map(v => v.data!));
+                                downConfig?.emitter.emit('end');
+                                resp.data = concatUint8Array(
+                                    queueRes.map(v => {
+                                        return v.resp!.data;
+                                    }),
+                                );
                                 switch (defaultResponseType) {
                                     case 'json':
                                         {
                                             try {
-                                                res.data = new TextDecoder('utf-8').decode(res.data);
-                                                res.data = JSON.parse(res.data);
-                                                res.config.responseType = defaultResponseType;
+                                                resp.data = new TextDecoder('utf-8').decode(resp.data);
+                                                resp.data = JSON.parse(resp.data);
+                                                resp.config.responseType = defaultResponseType;
                                             } catch (error: any) {}
                                         }
                                         break;
                                     case 'text': {
-                                        res.data = new TextDecoder('utf-8').decode(res.data);
-                                        res.config.responseType = defaultResponseType;
+                                        resp.data = new TextDecoder('utf-8').decode(resp.data);
+                                        resp.config.responseType = defaultResponseType;
                                     }
                                     default:
                                         break;
                                 }
 
                                 downResponse = {
-                                    ...res,
+                                    ...resp,
                                     isMulti: true,
                                     downConfig,
                                     queue: queueRes,
@@ -224,6 +232,6 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
     });
 }
 
-// setTimeout(() => {}, 1000000);
+AxiosMultiDown.EventEmitter = EventEmitter;
 
 export default AxiosMultiDown;

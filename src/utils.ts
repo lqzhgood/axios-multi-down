@@ -1,5 +1,5 @@
 import { PLATFORM, TEST_METHOD } from './const';
-import { IBlockState, IDownConfig } from './types/axios-down';
+import { IBlockData, IDownConfig } from './types/axios-down';
 
 export const platform = (() => {
     if (typeof window === 'object') {
@@ -42,7 +42,7 @@ export function splitRangeArr(n: number, m: number): string[] {
     return result;
 }
 
-export function splitArr(l: number, size: number): IBlockState[] {
+export function splitArr(l: number, size: number): IBlockData[] {
     if (l <= 0 || size <= 0) {
         throw new Error('参数错误');
     }
@@ -52,9 +52,9 @@ export function splitArr(l: number, size: number): IBlockState[] {
 
     for (let i = 0; i < parts; i++) {
         if (i !== parts - 1) {
-            result.push({ s: size * i, e: size * (i + 1) - 1 });
+            result.push({ s: size * i, e: size * (i + 1) - 1, i });
         } else {
-            result.push({ s: size * i, e: l - 1 });
+            result.push({ s: size * i, e: l - 1, i });
         }
     }
 

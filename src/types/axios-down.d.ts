@@ -4,17 +4,19 @@ interface IDownConfig<T = number | string> {
     max: number;
     blockSize: T;
     testMethod: TEST_METHOD;
+    emitter?: EventEmitter;
 }
 
-interface IBlockState {
+interface IBlockData {
     s: number;
     e: number;
-    data?: Uint8Array;
+    i: number;
+    resp?: AxiosResponse;
 }
 
 interface IAxiosDownResponse<T = any, D = any> extends AxiosResponse<T, D> {
     isMulti: boolean;
-    queue: IBlockState[];
+    queue: IBlockData[];
     downConfig: IDownConfig;
 }
 
