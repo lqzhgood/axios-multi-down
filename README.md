@@ -22,28 +22,31 @@ const axios = axiosBase.create({});
 
 AxiosMultiDown(axios);
 
-axios.down('http://example.com/test')
-    .then(result => {})
-    .catch(err => {});
+axios
+	.down('http://example.com/test')
+	.then(result => {})
+	.catch(err => {});
 
-axios.down('http://example.com/test', {
-        method: 'get',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        // ...AxiosRequestConfig
-    })
-    .then(result => {})
-    .catch(err => {});
+axios
+	.down('http://example.com/test', {
+		method: 'get',
+		headers: { 'X-Requested-With': 'XMLHttpRequest' },
+		// ...AxiosRequestConfig
+	})
+	.then(result => {})
+	.catch(err => {});
 
-axios.down({
-        url: 'http://example.com/test',
-        method: 'post',
-        data: {
-            firstName: 'Fred',
-        },
-        // ...AxiosRequestConfig
-    })
-    .then(result => {})
-    .catch(err => {});
+axios
+	.down({
+		url: 'http://example.com/test',
+		method: 'post',
+		data: {
+			firstName: 'Fred',
+		},
+		// ...AxiosRequestConfig
+	})
+	.then(result => {})
+	.catch(err => {});
 ```
 
 ## Api
@@ -52,7 +55,7 @@ axios.down({
 
 ```
 AxiosMultiDown( axios )
-AxiosMultiDown( axios [ , DownOptions ] ) // Global DownOptions
+AxiosMultiDown( axios [ , DownConfig ] ) // Global DownConfig
 ```
 
 > axios.down
@@ -60,15 +63,21 @@ AxiosMultiDown( axios [ , DownOptions ] ) // Global DownOptions
 ```
 axios.down( url )
 axios.down( AxiosRequestConfig )
-axios.down( url [ , AxiosRequestConfig ] )
+
+axios.down( url, AxiosRequestConfig )
+axios.down( AxiosRequestConfig , DownConfig )
+
+axios.down( url , AxiosRequestConfig, DownConfig )
 ```
 
-> DownOptions
+> DownConfig
 
-| Name       | Type        | Default            | Description                                                                       | remark                                                                                    |
-| ---------- | ----------- | ------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| max        | `Number`    | `3`                | The maximum number of simultaneous downloads                                                            | \*1                                                                                       |
-| blockSize  | `Number`    | `10 * 1024 * 1024` | The size of individual download blocks                                                                  | unit `byte`                                                                                 |
+defaultDownConfig => /src/const.ts
+
+| Name       | Type        | Default            | Description                                                                                                   | remark                                                                                                                     |
+| ---------- | ----------- | ------------------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| max        | `Number`    | `3`                | The maximum number of simultaneous downloads                                                                  | \*1                                                                                                                        |
+| blockSize  | `Number`    | `10 * 1024 * 1024` | The size of individual download blocks                                                                        | unit `byte`                                                                                                                |
 | testMethod | `head self` | `head`             | HTTP method used to check if the server supports the `Range` header.， self means `AxiosRequestConfig.method` | If using `self`, please be aware of idempotence [Idempotent](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
 
 ```

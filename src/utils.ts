@@ -1,4 +1,5 @@
-import { IBlockState } from './types/axios-down';
+import { TEST_METHOD } from './const';
+import { IBlockState, IDownConfig } from './types/axios-down';
 
 export enum Platform {
 	NODE,
@@ -81,4 +82,36 @@ export function concatUint8Array(arr: Uint8Array[]) {
 	});
 
 	return mergedArray;
+}
+
+export function checkDownConfig(o: IDownConfig) {
+	if (typeof o.max !== 'number') {
+		throw new Error(`downConfig.max must be number, got ${o.max}`);
+	}
+	o.blockSize = blockSizeValue(o.blockSize);
+	if (![TEST_METHOD.HEAD, TEST_METHOD.SELF].includes(o.testMethod)) {
+		throw new Error(`downConfig.testMethod must be head | self , got ${o.testMethod}`);
+	}
+}
+
+export function blockSizeValue(size: string | number): number {
+	if (typeof size === 'number') {
+		if (size <= 0) {
+			throw new Error(`downConfig.blockSize number must be > 0 , got ${size}`);
+		}
+		return size;
+	}
+	if (/^\d+K$/.test(size)) {
+		return Number(size.match(/\d+/)![0]) * 1024;
+	}
+	if (/^\d+M$/.test(size)) {
+		return Number(size.match(/\d+/)![0]) * 1024 * 1024;
+	}
+	if (/^\d+G$/.test(size)) {
+		return Number(size.match(/\d+/)![0]) * 1024 * 1024 * 1024;
+	}
+	if (/^\d+T$/.test(size)) {
+		return Number(size.match(/\d+/)![0]) * 1024 * 1024 * 1024 * 1024;
+	}
+	throw new Error(`downConfig.blockSize string only supported K,M,G,T, got ${size}`);
 }

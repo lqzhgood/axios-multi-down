@@ -1,43 +1,52 @@
-import { AxiosInstance, AxiosRequestConfig, AxiosResponse, ResponseType } from 'axios';
-import { concatUint8Array, splitArr, splitRangeArr } from './utils';
-import type { IAxiosDownResponse, IBlockState, IDownOptions, testContentLength } from './types/axios-down';
+import { AxiosInstance, AxiosRequestConfig, ResponseType } from 'axios';
+import { checkDownConfig, concatUint8Array, splitArr } from './utils';
+import { TEST_METHOD, downConfigDefault } from './const';
+import type { IAxiosDownResponse, IBlockState, IDownConfig, testContentLength } from './types/axios-down';
 
-enum TEST_METHOD {
-	HEAD = 'head',
-	SELF = 'self',
-}
+function AxiosMultiDown(axios: AxiosInstance, downConfigGlobal: Partial<IDownConfig> = downConfigDefault): AxiosInstance {
+	axios.down = async function <T = any, D = any>(configOrUrl: string | AxiosRequestConfig<D>, config?: AxiosRequestConfig<D> | Partial<IDownConfig>, downConfig?: Partial<IDownConfig>): Promise<IAxiosDownResponse<T, D>> {
+		let axiosConfig: AxiosRequestConfig<D> = {};
+		let downConfigUse: IDownConfig = { ...downConfigDefault, ...downConfigGlobal };
 
-const defaultOptions: IDownOptions = {
-	max: 3,
-	blockSize: 10 * 1024 * 1024, // 10M
-	testMethod: TEST_METHOD.HEAD,
-};
-
-function AxiosMultiDown(axios: AxiosInstance, options: Partial<IDownOptions> = defaultOptions): AxiosInstance {
-	// @ts-ignore
-	axios.down = async function <T = any, D = any>(configOrUrl: string | AxiosRequestConfig<D>, axiosConfig: AxiosRequestConfig<D>): Promise<R> {
-		if (typeof configOrUrl === 'string') {
-			axiosConfig = axiosConfig || {};
-			axiosConfig.url = configOrUrl;
-		} else {
-			axiosConfig = configOrUrl || {};
+		if (arguments.length === 1) {
+			if (typeof configOrUrl === 'string') {
+				axiosConfig = { url: configOrUrl };
+			} else {
+				axiosConfig = configOrUrl;
+			}
 		}
 
-		const downOptions: IDownOptions = { ...defaultOptions, ...options };
+		if (arguments.length === 2) {
+			if (typeof configOrUrl === 'string') {
+				// url axiosConfig
+				axiosConfig = { ...config, url: configOrUrl };
+			} else {
+				// axiosConfig downConfigs
+				axiosConfig = configOrUrl;
+				downConfigUse = { ...downConfigUse, ...config };
+			}
+		}
 
-		const contentLength = await testRangeSupport<D>(axios, downOptions, axiosConfig);
+		if (arguments.length === 3) {
+			axiosConfig = { ...config, url: configOrUrl as string };
+			downConfigUse = { ...downConfigUse, ...downConfig };
+		}
+
+		checkDownConfig(downConfigUse);
+
+		const contentLength = await testRangeSupport<D>(axios, downConfigUse, axiosConfig);
 
 		if (!contentLength) {
-			const r = await downByOne<T, D>(axios, axiosConfig, downOptions);
+			const r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
 			return r;
 		} else {
-			const queueRes = splitArr(contentLength, downOptions.blockSize);
-			downOptions.max = downOptions.max <= queueRes.length ? downOptions.max : queueRes.length;
+			const queueRes = splitArr(contentLength, downConfigUse.blockSize);
+			downConfigUse.max = downConfigUse.max <= queueRes.length ? downConfigUse.max : queueRes.length;
 			let r;
-			if (downOptions.max === 1) {
-				r = await downByOne<T, D>(axios, axiosConfig, downOptions);
+			if (downConfigUse.max === 1) {
+				r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
 			} else {
-				r = await downByMulti<T, D>(axios, axiosConfig, downOptions, queueRes);
+				r = await downByMulti<T, D>(axios, axiosConfig, downConfigUse, queueRes);
 			}
 			return r;
 		}
@@ -46,8 +55,8 @@ function AxiosMultiDown(axios: AxiosInstance, options: Partial<IDownOptions> = d
 	return axios;
 }
 
-async function testRangeSupport<D>(axios: AxiosInstance, downOptions: IDownOptions, axiosConfig: AxiosRequestConfig<D>) {
-	const { testMethod } = downOptions;
+async function testRangeSupport<D>(axios: AxiosInstance, downConfig: IDownConfig, axiosConfig: AxiosRequestConfig<D>) {
+	const { testMethod } = downConfig;
 	const headers = {
 		...axiosConfig.headers,
 		Range: 'bytes=0-0',
@@ -114,14 +123,14 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 	});
 }
 
-async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downOptions: IDownOptions): Promise<IAxiosDownResponse<T>> {
+async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig): Promise<IAxiosDownResponse<T>> {
 	const res = await axios<T, any>(axiosConfig);
 	const queueRes: IBlockState[] = [{ s: 0, e: res.headers['content-length'] - 1, data: res.data }];
-	const downResponse = { ...res, isMulti: false, downOptions, queue: queueRes };
+	const downResponse = { ...res, isMulti: false, downConfig, queue: queueRes };
 	return downResponse;
 }
 
-function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downOptions: IDownOptions, queueRes: IBlockState[]): Promise<IAxiosDownResponse<T>> {
+function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig, queueRes: IBlockState[]): Promise<IAxiosDownResponse<T>> {
 	return new Promise((resolveAll, rejectAll) => {
 		let downResponse: IAxiosDownResponse<T>;
 		const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
@@ -152,7 +161,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
 								downResponse = {
 									...res,
 									isMulti: true,
-									downOptions,
+									downConfig,
 									queue: queueRes,
 								};
 							}
@@ -160,15 +169,25 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
 							// 最后一个请求
 							if (curr === queueDown.length && active === 1) {
 								res.data = concatUint8Array(queueRes.map(v => v.data!));
-								if (defaultResponseType === 'json') {
-									try {
+								switch (defaultResponseType) {
+									case 'json':
+										{
+											try {
+												res.data = new TextDecoder('utf-8').decode(res.data);
+												res.data = JSON.parse(res.data);
+												res.config.responseType = defaultResponseType;
+											} catch (error: any) {}
+										}
+										break;
+									case 'text': {
 										res.data = new TextDecoder('utf-8').decode(res.data);
-										res.data = JSON.parse(res.data);
-									} catch (error: any) {
-										console.log('is not json error.message', error.message);
+										res.config.responseType = defaultResponseType;
 									}
+									default:
+										break;
 								}
 
+								downResponse.config = res.config;
 								downResponse.data = res.data;
 								downResponse.status = 200;
 								resolveAll(downResponse);
@@ -182,7 +201,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
 						})
 						.finally(() => {
 							active--;
-							if (curr < queueDown.length && (active < downOptions.max || downOptions.max === 1)) {
+							if (curr < queueDown.length && (active < downConfig.max || downConfig.max === 1)) {
 								queueDown[curr]();
 							}
 						});
@@ -191,7 +210,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
 			return fn;
 		});
 
-		for (let i = 0; i < downOptions.max; i++) {
+		for (let i = 0; i < downConfig.max; i++) {
 			queueDown[i]();
 		}
 	});

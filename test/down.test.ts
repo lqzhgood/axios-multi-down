@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import axiosBase from 'axios';
 import _ from 'lodash';
 
-import { afterAll, beforeAll, beforeEach, describe, expect, jest, test } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, jest, test } from '@jest/globals';
 
 import { testServer } from './utils/http-server';
 import { makeBigFile, md5File, md5String } from './utils';
@@ -28,12 +28,12 @@ afterAll(() => {
 });
 
 describe('test down method', () => {
-	const axios = axiosBase.create({});
-	axiosMultiDown(axios, {
-		blockSize: 10 * 1024 * 1024,
-	});
-
 	describe('test big file', () => {
+		const axios = axiosBase.create({});
+		axiosMultiDown(axios, {
+			blockSize: 10 * 1024 * 1024,
+		});
+
 		const fileName = '100M.test';
 
 		const f = testFile(fileName);
@@ -52,7 +52,7 @@ describe('test down method', () => {
 
 		test('range not support', async () => {
 			const url = testUrl(fileName, false);
-			const { data, isMulti } = await axios.down({ url, responseType: 'text' });
+			const { data, isMulti } = await axios.down(url, { responseType: 'text' });
 			const _md5String = md5String(data);
 			expect(isMulti).toBe(false);
 			expect(_md5File).toBe(_md5String);
@@ -60,6 +60,11 @@ describe('test down method', () => {
 	});
 
 	describe('test json', () => {
+		const axios = axiosBase.create({});
+		axiosMultiDown(axios, {
+			blockSize: 10 * 1024 * 1024,
+		});
+
 		const fileName = 'sample.json';
 
 		const f = testFile(fileName);
@@ -78,14 +83,26 @@ describe('test down method', () => {
 
 		test('range support', async () => {
 			const url = testUrl(fileName, true);
-			const { data, isMulti } = await axios.down(url); // default  responseType: 'json'
+			const { data, isMulti } = await axios.down(
+				url,
+				{},
+				{
+					blockSize: 1,
+				},
+			); // default  responseType: 'json'
 			expect(isMulti).toBe(true);
 			expect(o).toStrictEqual(data);
 		});
 
 		test('range not support', async () => {
 			const url = testUrl(fileName, false);
-			const { data, isMulti } = await axios.down({ url }); // default  responseType: 'json'
+			const { data, isMulti } = await axios.down(
+				url,
+				{},
+				{
+					blockSize: 1,
+				},
+			); // default  responseType: 'json'
 			expect(isMulti).toBe(false);
 			expect(o).toStrictEqual(data);
 		});

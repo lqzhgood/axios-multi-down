@@ -22,28 +22,31 @@ const axios = axiosBase.create({});
 
 AxiosMultiDown(axios);
 
-axios.down('http://example.com/test')
-    .then(result => {})
-    .catch(err => {});
+axios
+	.down('http://example.com/test')
+	.then(result => {})
+	.catch(err => {});
 
-axios.down('http://example.com/test', {
-        method: 'get',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        // ...AxiosRequestConfig
-    })
-    .then(result => {})
-    .catch(err => {});
+axios
+	.down('http://example.com/test', {
+		method: 'get',
+		headers: { 'X-Requested-With': 'XMLHttpRequest' },
+		// ...AxiosRequestConfig
+	})
+	.then(result => {})
+	.catch(err => {});
 
-axios.down({
-        url: 'http://example.com/test',
-        method: 'post',
-        data: {
-            firstName: 'Fred',
-        },
-        // ...AxiosRequestConfig
-    })
-    .then(result => {})
-    .catch(err => {});
+axios
+	.down({
+		url: 'http://example.com/test',
+		method: 'post',
+		data: {
+			firstName: 'Fred',
+		},
+		// ...AxiosRequestConfig
+	})
+	.then(result => {})
+	.catch(err => {});
 ```
 
 ## Api
@@ -52,7 +55,7 @@ axios.down({
 
 ```
 AxiosMultiDown( axios )
-AxiosMultiDown( axios [ , DownOptions ] ) // Global DownOptions
+AxiosMultiDown( axios [ , DownConfig ] ) // Global DownConfig
 ```
 
 > axios.down
@@ -60,15 +63,21 @@ AxiosMultiDown( axios [ , DownOptions ] ) // Global DownOptions
 ```
 axios.down( url )
 axios.down( AxiosRequestConfig )
-axios.down( url [ , AxiosRequestConfig ] )
+
+axios.down( url, AxiosRequestConfig )
+axios.down( AxiosRequestConfig , DownConfig )
+
+axios.down( url , AxiosRequestConfig, DownConfig )
 ```
 
-> DownOptions
+> DownConfig
 
-| Name       | Type        | Default            | Description                                                                       | remark                                                                                    |
-| ---------- | ----------- | ------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| max        | `Number`    | `3`                | 最大同时进行下载的数量                                                            | \*1                                                                                       |
-| blockSize  | `Number`    | `10 * 1024 * 1024` | 单个下载的块大小                                                                  | 单位 `byte`                                                                                 |
+defaultDownConfig => /src/const.ts
+
+| Name       | Type        | Default            | Description                                                                           | remark                                                                                         |
+| ---------- | ----------- | ------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| max        | `Number`    | `3`                | 最大同时进行下载的数量                                                                | \*1                                                                                            |
+| blockSize  | `Number`    | `10 * 1024 * 1024` | 单个下载的块大小                                                                      | 单位 `byte`                                                                                    |
 | testMethod | `head self` | `head`             | 用于探测服务器是否支持 `Range` 的HTTP方法， self 代表使用 `AxiosRequestConfig.method` | 如果使用 `self`, 请注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
 
 ```
@@ -88,7 +97,6 @@ max 会被改写为 2 -> [ 0-8 , 9-9 ]
 #### 不支持 Range
 
 如果资源不支持 [Range](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range)，将自动回退使 `axios.down === axios` 并返回结果
-
 
 #### 跨域 CORS
 

@@ -1,9 +1,9 @@
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-interface IDownOptions {
+interface IDownConfig {
 	max: number;
 	blockSize: number;
-	testMethod?: TEST_METHOD.HEAD | TEST_METHOD.SELF;
+	testMethod: TEST_METHOD.HEAD | TEST_METHOD.SELF;
 }
 
 interface IBlockState {
@@ -15,13 +15,17 @@ interface IBlockState {
 interface IAxiosDownResponse<T = any, D = any> extends AxiosResponse<T, D> {
 	isMulti: boolean;
 	queue: IBlockState[];
-	downOptions: IDownOptions;
+	downConfig: IDownConfig;
 }
 
 type testContentLength = number | null;
 
 interface AxiosDownMethod {
-	<T = any, R = IAxiosDownResponse<T>, D = any>(configOrUrl: string | AxiosRequestConfig<D>, config?: AxiosRequestConfig<D>): Promise<R>;
+	<T = any, R = IAxiosDownResponse<T>, D = any>(url: string): Promise<R>;
+	<T = any, R = IAxiosDownResponse<T>, D = any>(config: AxiosRequestConfig<D>): Promise<R>;
+	<T = any, R = IAxiosDownResponse<T>, D = any>(url: string, config: AxiosRequestConfig<D>): Promise<R>;
+	<T = any, R = IAxiosDownResponse<T>, D = any>(config: AxiosRequestConfig<D>, downConfig: Partial<IDownConfig> = downConfigGlobal): Promise<R>;
+	<T = any, R = IAxiosDownResponse<T>, D = any>(url: string, config: AxiosRequestConfig<D>, downConfig: Partial<IDownConfig> = downConfigGlobal): Promise<R>;
 }
 
 declare module 'axios' {

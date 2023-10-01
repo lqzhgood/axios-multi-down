@@ -10,11 +10,14 @@ AxiosMultiDown(axios, {
 
 console.time('use range');
 axios
-	.down('http://127.0.0.1:3000/test/files/100M.test?useRange=1', {
+	.down({
+		url: 'http://127.0.0.1:3000/test/files/100M.test?useRange=1',
 		responseType: 'text',
 	})
 	// .down('http://127.0.0.1:3000/test/files/sample.json?useRange=1')
-	.then(d => {})
+	.then(d => {
+		console.log('d', d);
+	})
 	.catch(err => {
 		console.log('err', err);
 	})
@@ -22,16 +25,18 @@ axios
 		console.timeEnd('use range');
 	});
 
-console.time('not use range');
-axios
-	.down('http://127.0.0.1:3000/test/files/100M.test')
-	.then(d => {})
-	.catch(err => {
-		console.log('err', err);
-	})
-	.finally(() => {
-		console.timeEnd('not use range');
-	});
+// console.time('not use range');
+// axios
+// 	.down('http://127.0.0.1:3000/test/files/100M.test')
+// 	.then(d => {
+// 		console.log('d', d);
+// 	})
+// 	.catch(err => {
+// 		console.log('err', err);
+// 	})
+// 	.finally(() => {
+// 		console.timeEnd('not use range');
+// 	});
 
 // axios({
 // 	url: 'http://127.0.0.1:3000/test/files/100M.test?useRange=1',
