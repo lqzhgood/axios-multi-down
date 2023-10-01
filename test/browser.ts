@@ -29,7 +29,7 @@ axios
         {
             testMethod: 'self',
             blockSize: 1,
-            emitter,
+            // emitter,
         },
     )
     // .down('http://127.0.0.1:3000/test/files/sample.json?useRange=1')

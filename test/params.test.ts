@@ -1,31 +1,13 @@
-import * as http from 'http';
 import * as fs from 'fs';
 import axiosBase from 'axios';
-import _ from 'lodash';
 
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-
-import { testServer } from './utils/http-server';
+import { describe, expect, it } from '@jest/globals';
 
 import axiosMultiDown from '../src/index';
 import { TEST_METHOD } from '../src/const';
 
-const PORT = 3001;
 const testFile = (f = '') => 'test/files/' + f;
-const testUrl = (f = '', useRange = false) => `http://127.0.0.1:${PORT}/${testFile(f)}?${useRange && 'useRange=1'}`;
-
-let server: http.Server;
-
-beforeAll(async () => {
-    server = await testServer(PORT);
-    if (!fs.existsSync('../test/files')) {
-        fs.mkdirSync('../test/files');
-    }
-});
-
-afterAll(() => {
-    server.close();
-});
+const testUrl = (f = '', useRange = false) => `http://127.0.0.1:${(global as any).PORT}/${testFile(f)}?${useRange && 'useRange=1'}`;
 
 const fileName = 'test.txt';
 
