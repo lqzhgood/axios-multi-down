@@ -13,7 +13,8 @@ console.time('use range');
 axios
     .down(
         {
-            url: 'http://127.0.0.1:3000/test/files/sample.json?useRange=1',
+            // url: 'http://127.0.0.1:3000/test/files/sample.json?useRange=1',
+            url: 'http://127.0.0.1:3000/test/files/100M.test?useRange=1',
             responseType: 'text',
         },
         {
@@ -22,7 +23,6 @@ axios
             // emitter,
         },
     )
-    // .down('http://127.0.0.1:3000/test/files/sample.json?useRange=1')
     .then(d => {
         console.log('d', d);
     })

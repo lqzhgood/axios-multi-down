@@ -34,7 +34,7 @@
     },
     "typings": "src/types/axios-down.d.ts",
     "scripts": {
-        "dev": "vite",
+        "dev": "vite --open /test/browser.html",
         "test": "jest",
         "server": "ts-node test\\utils\\startServer.ts",
         "build": "vue-tsc --noEmit && vite build"
