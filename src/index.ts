@@ -4,8 +4,15 @@ import { PLATFORM, TEST_METHOD, downConfigDefault } from './const';
 import type { IAxiosDownResponse, IBlockData, IDownConfig, rangeSupportRes } from './types/axios-down';
 import { EventEmitter } from './event';
 
-function AxiosMultiDown(axios: AxiosInstance, downConfigGlobal: Partial<IDownConfig> = downConfigDefault): AxiosInstance {
-    axios.down = async function <T = any, D = any>(configOrUrl: string | AxiosRequestConfig<D>, config?: AxiosRequestConfig<D> | Partial<IDownConfig>, downConfig?: Partial<IDownConfig>): Promise<IAxiosDownResponse<T, D>> {
+function AxiosMultiDown(
+    axios: AxiosInstance,
+    downConfigGlobal: Partial<IDownConfig> = downConfigDefault,
+): AxiosInstance {
+    axios.down = async function <T = any, D = any>(
+        configOrUrl: string | AxiosRequestConfig<D>,
+        config?: AxiosRequestConfig<D> | Partial<IDownConfig>,
+        downConfig?: Partial<IDownConfig>,
+    ): Promise<IAxiosDownResponse<T, D>> {
         let axiosConfig: AxiosRequestConfig<D> = {};
         let _downConfigUse: IDownConfig = { ...downConfigDefault, ...downConfigGlobal };
 
@@ -58,7 +65,11 @@ function AxiosMultiDown(axios: AxiosInstance, downConfigGlobal: Partial<IDownCon
     return axios;
 }
 
-async function testRangeSupport<D>(axios: AxiosInstance, downConfig: IDownConfig, axiosConfig: AxiosRequestConfig<D>): Promise<rangeSupportRes> {
+async function testRangeSupport<D>(
+    axios: AxiosInstance,
+    downConfig: IDownConfig,
+    axiosConfig: AxiosRequestConfig<D>,
+): Promise<rangeSupportRes> {
     const { testMethod } = downConfig;
     const headers = {
         ...axiosConfig.headers,
@@ -92,9 +103,9 @@ function rangeIsSupport(headers: AxiosResponse['headers']): [boolean, number] {
     const contentRange = headers['content-range']; // bytes 0-0/104857607
     const contentLength = Number(headers['content-length']);
 
-    let isSupport = isAccept || !!contentRange || contentLength === 1;
+    const isSupport = isAccept || !!contentRange || contentLength === 1;
 
-    let length = contentRange ? Number(contentRange.split('/')[1]) : contentLength;
+    const length = contentRange ? Number(contentRange.split('/')[1]) : contentLength;
 
     return [isSupport, length];
 }
@@ -117,6 +128,7 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 
         axios({ ...testAxiosConfig, signal: controller.signal, responseType: 'stream' })
             .then(resp => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 resp.data.on('data', (chunk: unknown) => {
                     resolve(resp);
                     controller.abort();
@@ -128,7 +140,11 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
     });
 }
 
-async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig): Promise<IAxiosDownResponse<T>> {
+async function downByOne<T, D>(
+    axios: AxiosInstance,
+    axiosConfig: AxiosRequestConfig<D>,
+    downConfig: IDownConfig,
+): Promise<IAxiosDownResponse<T>> {
     const resp = await axios<T, any>(axiosConfig);
     const blockData: IBlockData = { s: 0, e: resp.headers['content-length'] - 1, i: 0, resp: resp };
     const queue: IBlockData[] = [blockData];
@@ -141,7 +157,13 @@ async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestCo
     return downResponse;
 }
 
-function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig, queueRes: IBlockData[], totalContentLength: number): Promise<IAxiosDownResponse<T>> {
+function downByMulti<T = any, D = any>(
+    axios: AxiosInstance,
+    axiosConfig: AxiosRequestConfig<D>,
+    downConfig: IDownConfig,
+    queueRes: IBlockData[],
+    totalContentLength: number,
+): Promise<IAxiosDownResponse<T>> {
     return new Promise((resolveAll, rejectAll) => {
         let downResponse: IAxiosDownResponse<T>;
         const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
@@ -150,7 +172,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
         let active = 0;
         const queueDown: (() => Promise<IAxiosDownResponse<T>>)[] = queueRes.map(r => {
             const fn = (): Promise<IAxiosDownResponse<T>> =>
-                new Promise((resolve, reject) => {
+                new Promise(resolve => {
                     curr++;
                     active++;
 
@@ -191,13 +213,16 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
                                                 resp.data = new TextDecoder('utf-8').decode(resp.data);
                                                 resp.data = JSON.parse(resp.data);
                                                 resp.config.responseType = defaultResponseType;
-                                            } catch (error: any) {}
+                                            } catch (error: any) {
+                                                // ignore error
+                                            }
                                         }
                                         break;
                                     case 'text': {
                                         resp.data = new TextDecoder('utf-8').decode(resp.data);
                                         resp.config.responseType = defaultResponseType;
                                     }
+                                    // eslint-disable-next-line no-fallthrough
                                     default:
                                         break;
                                 }

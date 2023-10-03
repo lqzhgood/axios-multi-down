@@ -44,8 +44,9 @@ module.exports = {
                 jsxSingleQuote: true,
                 useTabs: false,
                 tabWidth: 4,
-                printWidth: 9999999,
+                printWidth: 120,
             },
         ],
+        '@typescript-eslint/no-explicit-any': 'off',
     },
 };

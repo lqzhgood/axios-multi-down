@@ -1,5 +1,5 @@
 {
-    "name": "AxiosMultiDown",
+    "name": "axios-multi-down",
     "author": "lqzh",
     "license": "MIT",
     "version": "0.0.1",
@@ -37,7 +37,10 @@
         "dev": "vite --open /test/browser.html",
         "test": "jest",
         "server": "ts-node test\\utils\\startServer.ts",
-        "build": "vue-tsc --noEmit && vite build"
+        "build": "vue-tsc --noEmit && vite build",
+        "prepare": "husky install",
+        "format": "prettier ./src --write --ignore-unknown",
+        "lint": "eslint ./src --fix"
     },
     "devDependencies": {
         "@jest/globals": "^29.7.0",
@@ -47,6 +50,8 @@
         "eslint": "^8.50.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
+        "husky": "^8.0.3",
+        "lint-staged": "^14.0.1",
         "prettier": "^3.0.3",
         "ts-jest": "^29.1.1",
         "typescript": "^5.2.2",
@@ -57,5 +62,16 @@
         "axios": "^1.5.0",
         "lodash": "^4.17.21",
         "ts-node": "^10.9.1"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "lint-staged": {
+        "src/**/*": [
+            "eslint --fix",
+            "prettier --write --ignore-unknown"
+        ]
     }
 }

@@ -12,8 +12,8 @@ testServer(3333);
 
 // @ts-ignore
 axios.down({
-	url: 'http://127.0.0.1:3000/test/files/100M.test',
+    url: 'http://127.0.0.1:3000/test/files/100M.test',
 });
 axios.down({
-	url: 'http://127.0.0.1:3000/test/files/100M.test?useRange=1',
+    url: 'http://127.0.0.1:3000/test/files/100M.test?useRange=1',
 });

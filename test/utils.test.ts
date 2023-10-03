@@ -31,7 +31,18 @@ describe('splitRangeArr', () => {
         expect(splitRangeArr(10, 9)).toStrictEqual(['0-1', '2-2', '3-3', '4-4', '5-5', '6-6', '7-7', '8-8', '9-9']);
     });
     it('10 / 10', () => {
-        expect(splitRangeArr(10, 10)).toStrictEqual(['0-0', '1-1', '2-2', '3-3', '4-4', '5-5', '6-6', '7-7', '8-8', '9-9']);
+        expect(splitRangeArr(10, 10)).toStrictEqual([
+            '0-0',
+            '1-1',
+            '2-2',
+            '3-3',
+            '4-4',
+            '5-5',
+            '6-6',
+            '7-7',
+            '8-8',
+            '9-9',
+        ]);
     });
     it('10 / 11', () => {
         expect(splitRangeArr(10, 11)).toStrictEqual(['0-']);

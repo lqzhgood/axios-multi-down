@@ -8,7 +8,8 @@ import { makeBigFile, md5File, md5String } from './utils';
 import axiosMultiDown from '../src/index';
 
 const testFile = (f = '') => 'test/files/' + f;
-const testUrl = (f = '', useRange = false) => `http://127.0.0.1:${(global as any).PORT}/${testFile(f)}?${useRange && 'useRange=1'}`;
+const testUrl = (f = '', useRange = false) =>
+    `http://127.0.0.1:${(global as any).PORT}/${testFile(f)}?${useRange && 'useRange=1'}`;
 
 describe('test down method', () => {
     describe('test big file', () => {

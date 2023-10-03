@@ -8,7 +8,8 @@ import { TEST_METHOD } from '../src/const';
 import AxiosMultiDown from '../src/index';
 
 const testFile = (f = '') => 'test/files/' + f;
-const testUrl = (f = '', useRange = false) => `http://127.0.0.1:${(global as any).PORT}/${testFile(f)}?${useRange && 'useRange=1'}`;
+const testUrl = (f = '', useRange = false) =>
+    `http://127.0.0.1:${(global as any).PORT}/${testFile(f)}?${useRange && 'useRange=1'}`;
 
 const fileName = 'test.txt';
 

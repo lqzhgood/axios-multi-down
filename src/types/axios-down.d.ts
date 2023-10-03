@@ -30,11 +30,18 @@ interface IAxiosDownResponse<T = any, D = any> extends AxiosResponse<T, D> {
 type rangeSupportRes = [boolean, number | null];
 
 interface AxiosDownMethod {
-    <T = any, R = IAxiosDownResponse<T>, D = any>(url: string): Promise<R>;
+    <T = any, R = IAxiosDownResponse<T>>(url: string): Promise<R>;
     <T = any, R = IAxiosDownResponse<T>, D = any>(config: AxiosRequestConfig<D>): Promise<R>;
     <T = any, R = IAxiosDownResponse<T>, D = any>(url: string, config: AxiosRequestConfig<D>): Promise<R>;
-    <T = any, R = IAxiosDownResponse<T>, D = any>(config: AxiosRequestConfig<D>, downConfig: Partial<IDownConfig> = downConfigGlobal): Promise<R>;
-    <T = any, R = IAxiosDownResponse<T>, D = any>(url: string, config: AxiosRequestConfig<D>, downConfig: Partial<IDownConfig> = downConfigGlobal): Promise<R>;
+    <T = any, R = IAxiosDownResponse<T>, D = any>(
+        config: AxiosRequestConfig<D>,
+        downConfig: Partial<IDownConfig> = downConfigGlobal,
+    ): Promise<R>;
+    <T = any, R = IAxiosDownResponse<T>, D = any>(
+        url: string,
+        config: AxiosRequestConfig<D>,
+        downConfig: Partial<IDownConfig> = downConfigGlobal,
+    ): Promise<R>;
 }
 
 declare module 'axios' {

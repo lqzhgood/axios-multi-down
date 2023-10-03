@@ -70,7 +70,7 @@ export function concatUint8Array(arr: Uint8Array[]) {
 
     const length = arr.reduce((pre, cV) => pre + cV.length, 0);
 
-    let mergedArray = new Uint8Array(length);
+    const mergedArray = new Uint8Array(length);
     let offset = 0;
     arr.forEach(v => {
         mergedArray.set(v, offset);
