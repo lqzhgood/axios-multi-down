@@ -2,7 +2,7 @@
     "name": "axios-multi-down",
     "author": "lqzh",
     "license": "MIT",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "Axios plugin, Speed up the download process by using multiple Axios requests to fetch a single file.",
     "keywords": [
         "AxiosMultiDown",
@@ -40,7 +40,10 @@
         "build": "vue-tsc --noEmit && vite build",
         "prepare": "husky install",
         "format": "prettier ./src --write --ignore-unknown",
-        "lint": "eslint ./src --fix"
+        "lint": "eslint ./src --fix",
+        "prerelease": "npm run build",
+        "release": "npm version -m \"New version: %s\"",
+        "postrelease": "npm publish"
     },
     "devDependencies": {
         "@jest/globals": "^29.7.0",
