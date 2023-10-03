@@ -1,10 +1,12 @@
-# building... not finish
-
 <h1 align="center">axios-multi-down</h1>
 
 <p align="center">Axios plugin, utilizes the <a href='https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range' target='_blank'>Range</a> feature to split <i>large files</i> and initiate multiple concurrent <code>Axios</code> requests to accelerate the download speed of large files.</p>
 
 **English** | [中文](./README.zh-hans.md)
+
+## Demo
+
+[https://lqzhgood.github.io/axios-multi-down](https://lqzhgood.github.io/axios-multi-down)
 
 ## Installation
 

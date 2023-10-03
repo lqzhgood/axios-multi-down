@@ -1,10 +1,12 @@
-# building... not finish
-
 <h1 align="center">axios-multi-down</h1>
 
 <p align="center"><code>Axios</code> 插件，通过 <a href='https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range' target='_blank'>Range</a> 特性， 将 <i>大文件</i> 分割，并发多个 <code>Axios</code> 请求加快大文件下载速度。</p>
 
 **中文** | [English](./README.md)
+
+## Demo
+
+[https://lqzhgood.github.io/axios-multi-down](https://lqzhgood.github.io/axios-multi-down)
 
 ## 安装
 
