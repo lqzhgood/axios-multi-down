@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-Hans-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <title>Demo</title>
+    <style>
+        #config {
+            margin-bottom: 20px;
+        }
+
+
+        #controls {
+            display: flex;
+        }
+
+        #controls .info {
+            flex: 1 1 auto;
+        }
+
+        #controls .info span {
+            margin-right: 20px;
+        }
+
+        #down {
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+
+        #down .block {
+            display: inline-block;
+            /* width: 10px; */
+            /* height: 10px; */
+            /* background: red; */
+            margin: 5px;
+        }
+
+
+
+        .box {
+            transition: all 0.3s;
+            transform-origin: center;
+            padding: 10px !important;
+            padding: 10px 20px;
+            padding-right: 50px;
+            background-color: #3bb3e0;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            text-decoration: none;
+            color: #fff;
+            position: relative;
+            border-radius: 5px;
+
+            transform: scale(0.8);
+            top: 3px;
+            background-image: linear-gradient(bottom, rgb(62, 184, 229) 0%, rgb(44, 160, 202) 100%);
+            box-shadow: inset 0px 1px 0px #2ab7ec, 0px 2px 0px 0px #156785, 0px 5px 3px #999;
+            opacity: 0.3;
+        }
+
+        /* .box::before {
+            background-color: #2591b4;
+            background-image: url(../images/right_arrow.png);
+            background-repeat: no-repeat;
+            background-position: center center;
+            content: "";
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            margin-top: -9px;
+            -webkit-border-radius: 50%;
+            -moz-border-radius: 50%;
+            -o-border-radius: 50%;
+            border-radius: 50%;
+            -webkit-box-shadow: inset 0px 1px 0px #052756, 0px 1px 0px #60c9f0;
+            -moz-box-shadow: inset 0px 1px 0px #052756, 0px 1px 0px #60c9f0;
+            -o-box-shadow: inset 0px 1px 0px #052756, 0px 1px 0px #60c9f0;
+            box-shadow: inset 0px 1px 0px #052756, 0px 1px 0px #60c9f0;
+        } */
+
+
+
+        .box.ok {
+            transform: scale(1);
+            background-image: linear-gradient(bottom, rgb(44, 160, 202) 0%, rgb(62, 184, 229) 100%);
+            box-shadow: inset 0px 1px 0px #2ab7ec, 0px 5px 0px 0px #156785, 0px 10px 5px #999;
+            opacity: 1;
+            animation: scale 0.3s ease-out;
+        }
+
+        .box.ok:active {
+            transform: scale(0.8) !important;
+            top: 3px;
+            background-image: linear-gradient(bottom, rgb(62, 184, 229) 0%, rgb(44, 160, 202) 100%);
+            box-shadow: inset 0px 1px 0px #2ab7ec, 0px 2px 0px 0px #156785, 0px 5px 3px #999;
+            opacity: 0.3;
+        }
+
+        @keyframes scale {
+            0% {
+                transform: scale(0.8);
+            }
+
+            80% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* .box.active::before,
+        .box:active::before {
+            top: 50%;
+            margin-top: -12px;
+            -webkit-box-shadow: inset 0px 1px 0px #60c9f0, 0px 3px 0px #0e3871, 0px 6px 3px #1a80a6;
+            -moz-box-shadow: inset 0px 1px 0px #60c9f0, 0px 3px 0px #0e3871, 0px 6px 3px #1a80a6;
+            -o-box-shadow: inset 0px 1px 0px #60c9f0, 0px 3px 0px #0e3871, 0px 6px 3px #1a80a6;
+            box-shadow: inset 0px 1px 0px #60c9f0, 0px 3px 0px #0e3871, 0px 6px 3px #1a80a6;
+        } */
+
+
+
+        /* .box {
+            background-color: #3bb3e0;
+            padding: 10px;
+            position: relative;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            text-decoration: none;
+            color: #fff;
+            background-image: linear-gradient(bottom, rgb(44, 160, 202) 0%, rgb(62, 184, 229) 100%);
+            background-image: -o-linear-gradient(bottom, rgb(44, 160, 202) 0%, rgb(62, 184, 229) 100%);
+            background-image: -moz-linear-gradient(bottom, rgb(44, 160, 202) 0%, rgb(62, 184, 229) 100%);
+            background-image: -webkit-linear-gradient(bottom, rgb(44, 160, 202) 0%, rgb(62, 184, 229) 100%);
+            background-image: -ms-linear-gradient(bottom, rgb(44, 160, 202) 0%, rgb(62, 184, 229) 100%);
+            background-image: -webkit-gradient(linear,
+                    left bottom,
+                    left top,
+                    color-stop(0, rgb(44, 160, 202)),
+                    color-stop(1, rgb(62, 184, 229)));
+            -webkit-box-shadow: inset 0px 1px 0px #7fd2f1, 0px 6px 0px #156785;
+            -moz-box-shadow: inset 0px 1px 0px #7fd2f1, 0px 6px 0px #156785;
+            -o-box-shadow: inset 0px 1px 0px #7fd2f1, 0px 6px 0px #156785;
+            box-shadow: inset 0px 1px 0px #7fd2f1, 0px 6px 0px #156785;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            -o-border-radius: 5px;
+            border-radius: 5px;
+        }
+
+        .box::before {
+            background-color: #072239;
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding-left: 2px;
+            padding-right: 2px;
+            padding-bottom: 4px;
+            left: -2px;
+            top: 5px;
+            z-index: -1;
+            -webkit-border-radius: 6px;
+            -moz-border-radius: 6px;
+            -o-border-radius: 6px;
+            border-radius: 6px;
+            -webkit-box-shadow: 0px 1px 0px #fff;
+            -moz-box-shadow: 0px 1px 0px #fff;
+            -o-box-shadow: 0px 1px 0px #fff;
+            box-shadow: 0px 1px 0px #fff;
+        }
+
+        .box:active,
+        .box.active {
+            color: #156785;
+            text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.3);
+            background: rgb(44, 160, 202);
+            -webkit-box-shadow: inset 0px 1px 0px #7fd2f1, inset 0px -1px 0px #156785;
+            -moz-box-shadow: inset 0px 1px 0px #7fd2f1, inset 0px -1px 0px #156785;
+            -o-box-shadow: inset 0px 1px 0px #7fd2f1, inset 0px -1px 0px #156785;
+            box-shadow: inset 0px 1px 0px #7fd2f1, inset 0px -1px 0px #156785;
+            top: 7px;
+            opacity: 0.3;
+        }
+
+        .box:active::before,
+        .box.active::before {
+            top: -2px;
+        } */
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="config">
+            <fieldset :disabled="loading">
+                <legend>downConfig</legend>
+                <label>
+                    max: {{downConfig.max}}
+                    <input type="range" min="0" max="100" v-model="downConfig.max" step="1">
+                </label>
+                <br />
+                <label>
+                    blockSize: {{downConfig.blockSize}} bytes
+                    <button @click="downConfig.blockSize = 100*1024">100K</button>
+                    <button @click="downConfig.blockSize = 10*1024*1024">1M</button>
+                    <button @click="downConfig.blockSize = 100*1024*1024">10M</button>
+                </label>
+                <br />
+                <label>testMethod: {{downConfig.testMethod}}</label>
+            </fieldset>
+        </div>
+
+        <div id="controls">
+            <div class="info">
+                <span title="blockLength = Math.ceil( contentLength / blockSize ); &#10;max = max <= blockLength ? max : blockLength;">real max {{realMax?realMax:'-'}}
+                </span>
+                <span>isMulti: {{isMulti}}</span>
+            </div>
+            <div class="btns">
+                <button @click="down('./99m.demo')" :disabled="loading">Download 99M File</button>
+                <button @click="down('./10m.demo')" :disabled="loading">Download 10M File</button>
+                <button @click="down('./1m.demo')" :disabled="loading">Download 1M File</button>
+            </div>
+        </div>
+
+        <div id="down">
+            <div class="block box" v-for="(b,i) in downRes" :key="i" :class="{ok: b}"></div>
+        </div>
+    </div>
+    <script src="./vue.global.js"></script>
+    <script src="./axios.min.js"></script>
+    <script src="./AxiosMultiDown.umd.js"></script>
+    <script>
+        const { createApp } = Vue;
+
+        const a = axios.create({})
+
+
+        createApp({
+            mounted() {
+                const emitter = new AxiosMultiDown.EventEmitter();
+                emitter.on('preDown', (queue, config) => {
+                    this.realMax = config.max;
+                    this.queue = [...queue];
+                })
+
+                emitter.on('data', (block, queue, config) => {
+                    this.queue = [...queue];
+                })
+
+                emitter.on('end', (queue, config) => {
+                    console.log('end',);
+                })
+
+                AxiosMultiDown(a, {
+                    emitter
+                });
+            },
+            data: () => ({
+                realMax: null,
+                isMulti: null,
+                loading: false,
+                downConfig: {
+                    max: 3,
+                    blockSize: 100 * 1024,
+                    testMethod: 'head',
+                },
+                queue: []
+            }),
+            computed: {
+                downRes() {
+                    const v = this.queue.map(d => !!d.resp);
+                    return v;
+                }
+            },
+            methods: {
+                down(url) {
+                    if (this.loading) return;
+                    this.loading = true;
+                    this.isMulti = null;
+                    this.realMax = null;
+                    this.queue = []
+                    a.down(url, {}, this.downConfig).then((d) => {
+                        this.isMulti = d.isMulti;
+                    }).finally(() => {
+                        this.loading = false;
+                    })
+                }
+            }
+        }).mount('#app')
+
+
+    </script>
+</body>
+
+</html>
