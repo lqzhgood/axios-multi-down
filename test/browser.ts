@@ -10,16 +10,6 @@ AxiosMultiDown(axios, {
 
 console.time('use range');
 
-const emitter = new AxiosMultiDown.EventEmitter();
-emitter.emit('data', 11111111111111111);
-emitter.on('data', d => {
-    console.log('emit data', d);
-});
-
-emitter.on('end', d => {
-    console.log('emit end', d);
-});
-
 axios
     .down(
         {

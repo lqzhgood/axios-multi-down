@@ -43,6 +43,8 @@ function AxiosMultiDown(axios: AxiosInstance, downConfigGlobal: Partial<IDownCon
         } else {
             const queueRes = splitArr(contentLength, downConfigUse.blockSize);
             downConfigUse.max = downConfigUse.max <= queueRes.length ? downConfigUse.max : queueRes.length;
+
+            downConfigUse.emitter?.emit('preDown', downConfigUse, queueRes);
             let r;
             if (downConfigUse.max === 1) {
                 r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);

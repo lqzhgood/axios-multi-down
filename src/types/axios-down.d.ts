@@ -2,6 +2,7 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { EventEmitter } from '../event';
 
 interface EventsDefault {
+    preDown: (config: IDownConfig, queue: IBlockData[]) => void;
     data: (block: IBlockData, queue: IBlockData[]) => void;
     end: () => void;
 }
