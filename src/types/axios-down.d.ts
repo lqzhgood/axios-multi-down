@@ -1,10 +1,10 @@
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { EventEmitter } from '../event';
 
-type EventEmitter = {
-    on(event: string, listener: (...args: any[]) => void): void;
-    emit(event: string, ...args: any[]): void;
-    off(event: string, listener: (...args: any[]) => void): void;
-};
+interface EventsDefault {
+    data: (block: IBlockData, queue: IBlockData[]) => void;
+    end: () => void;
+}
 
 interface IDownConfig<T = number | string> {
     max: number;

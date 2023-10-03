@@ -2,7 +2,7 @@ import { AxiosInstance, AxiosRequestConfig, ResponseType } from 'axios';
 import { checkDownConfig, concatUint8Array, platform, splitArr } from './utils';
 import { PLATFORM, TEST_METHOD, downConfigDefault } from './const';
 import type { IAxiosDownResponse, IBlockData, IDownConfig, testContentLength } from './types/axios-down';
-import { EventEmitter } from './emit';
+import { EventEmitter } from './event';
 
 function AxiosMultiDown(axios: AxiosInstance, downConfigGlobal: Partial<IDownConfig> = downConfigDefault): AxiosInstance {
     axios.down = async function <T = any, D = any>(configOrUrl: string | AxiosRequestConfig<D>, config?: AxiosRequestConfig<D> | Partial<IDownConfig>, downConfig?: Partial<IDownConfig>): Promise<IAxiosDownResponse<T, D>> {
@@ -84,10 +84,13 @@ function testByHead(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
         axios({ ...testAxiosConfig, method: TEST_METHOD.HEAD })
             .then(resp => {
                 // head  -> body = empty
-                const contentRange = resp.headers['content-range']; // bytes 0-0/104857607
-                const contentLength: 1 | '1' | undefined = resp.headers['content-length'];
+                const serverSupportRange = resp.headers['accept-ranges'] === 'bytes';
 
-                if (contentLength == 1 && contentRange) {
+                // 有些服务器返回的是全长， 且 head 中不返回 contentRange； 如 GithubPage
+                // const contentLength: 1 | '1' | undefined = resp.headers['content-length'];
+                const contentRange = resp.headers['content-range']; // bytes 0-0/104857607
+
+                if (serverSupportRange && contentRange) {
                     resolve(Number(contentRange.split('/')[1]));
                 } else {
                     resolve(null);
@@ -127,9 +130,11 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
 async function downByOne<T, D>(axios: AxiosInstance, axiosConfig: AxiosRequestConfig<D>, downConfig: IDownConfig): Promise<IAxiosDownResponse<T>> {
     const resp = await axios<T, any>(axiosConfig);
     const blockData: IBlockData = { s: 0, e: resp.headers['content-length'] - 1, i: 0, resp: resp };
-    downConfig.emitter?.emit('data', blockData);
-    downConfig.emitter?.emit('end');
     const queue: IBlockData[] = [blockData];
+
+    downConfig.emitter?.emit('data', blockData, queue);
+    downConfig.emitter?.emit('end');
+
     const downResponse = { ...resp, isMulti: false, downConfig, queue: queue };
 
     return downResponse;
@@ -158,7 +163,7 @@ function downByMulti<T = any, D = any>(axios: AxiosInstance, axiosConfig: AxiosR
                             resp.data = resp.data instanceof ArrayBuffer ? new Uint8Array(resp.data) : resp.data;
 
                             r.resp = resp;
-                            downConfig.emitter?.emit('data', r);
+                            downConfig.emitter?.emit('data', r, queueRes);
 
                             // 第一个请求作为 down response
                             if (!downResponse) {
