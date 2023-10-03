@@ -44,6 +44,8 @@ export function splitRangeArr(n: number, m: number): string[] {
 
 export function splitArr(l: number, size: number): IBlockData[] {
     if (l <= 0 || size <= 0) {
+        console.log('contentLength', l);
+        console.log('blockSize', size);
         throw new Error('参数错误');
     }
     const result = [];

@@ -2,9 +2,9 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { EventEmitter } from '../event';
 
 interface EventsDefault {
-    preDown: (config: IDownConfig, queue: IBlockData[]) => void;
-    data: (block: IBlockData, queue: IBlockData[]) => void;
-    end: () => void;
+    preDown: (queue: IBlockData[], config: IDownConfig) => void;
+    data: (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void;
+    end: (queue: IBlockData[], config: IDownConfig) => void;
 }
 
 interface IDownConfig<T = number | string> {
@@ -27,7 +27,7 @@ interface IAxiosDownResponse<T = any, D = any> extends AxiosResponse<T, D> {
     downConfig: IDownConfig;
 }
 
-type testContentLength = number | null;
+type rangeSupportRes = [boolean, number | null];
 
 interface AxiosDownMethod {
     <T = any, R = IAxiosDownResponse<T>, D = any>(url: string): Promise<R>;
