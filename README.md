@@ -134,8 +134,10 @@ The `...axiosResponse` portion will be overwritten twice
 
 ```js
 const emitter = new AxiosMultiDown.EventEmitter();
-emitter.on('data', (data: IBlockData)=>{})
-emitter.on('end', ()=>{})
+
+emitter.on('preDown', (queue: IBlockData[], config: IDownConfig)=>{})
+emitter.on('data', (block: IBlockData, queue: IBlockData[], config: IDownConfig)
+emitter.on('end', (queue: IBlockData[], config: IDownConfig)=>{})
 
 axios.down( '/test', {} , { emitter } )
 
