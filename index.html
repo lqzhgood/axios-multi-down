@@ -199,6 +199,8 @@
 </head>
 
 <body>
+    <h1 style="text-align:center"><a href="https://github.com/lqzhgood/axios-multi-down/" target="_blank">axios-multi-down</a></h1>
+
     <div id="app">
         <div id="config">
             <fieldset :disabled="loading">
@@ -210,9 +212,9 @@
                 <br />
                 <label>
                     blockSize: {{downConfig.blockSize}} bytes
-                    <button @click="downConfig.blockSize = 100*1024">100K</button>
-                    <button @click="downConfig.blockSize = 10*1024*1024">1M</button>
-                    <button @click="downConfig.blockSize = 100*1024*1024">10M</button>
+                    <button @click="downConfig.blockSize = 100*1024" :style="{opacity: downConfig.blockSize === 100*1024 ? 1 : 0.5}">100K</button>
+                    <button @click="downConfig.blockSize = 10*1024*1024" :style="{opacity: downConfig.blockSize === 10*1024*1024 ? 1 : 0.5}">1M</button>
+                    <button @click="downConfig.blockSize = 100*1024*1024" :style="{opacity: downConfig.blockSize === 100*1024*1024 ? 1 : 0.5}">10M</button>
                 </label>
                 <br />
                 <label>testMethod: {{downConfig.testMethod}}</label>
@@ -226,18 +228,19 @@
                 <span>isMulti: {{isMulti}}</span>
             </div>
             <div class="btns">
-                <button @click="down('./99m.demo')" :disabled="loading">Download 99M File</button>
-                <button @click="down('./10m.demo')" :disabled="loading">Download 10M File</button>
-                <button @click="down('./1m.demo')" :disabled="loading">Download 1M File</button>
+                <button @click="down(t)" :disabled="loading" v-for="t in test" :key="t.file">Download {{t.file}} File</button>
             </div>
         </div>
 
+        <div id="check" :style="{color: check.target === check.result ? 'green' : 'red'}">md5: {{check.target}} === {{check.result}}</div>
         <div id="down">
             <div class="block box" v-for="(b,i) in downRes" :key="i" :class="{ok: b}"></div>
         </div>
     </div>
-    <script src="./vue.global.js"></script>
-    <script src="./axios.min.js"></script>
+    <script src="./lib/vue.global.js"></script>
+    <script src="./lib/spark-md5.min.js"></script>
+    <script src="./lib/axios.min.js"></script>
+
     <script src="./AxiosMultiDown.umd.js"></script>
     <script>
         const { createApp } = Vue;
@@ -266,8 +269,15 @@
                 });
             },
             data: () => ({
+                test: [
+                    { file: '1m', md5: "b6d81b360a5672d80c27430f39153e2c" },
+                    { file: '10m', md5: "f1c9645dbc14efddc7d8a322685f26eb" },
+                    { file: '99m', md5: "a6c8a3811833496744c8a7a45f893d94" },
+                ],
+                check: { target: null, result: null },
                 realMax: null,
                 isMulti: null,
+
                 loading: false,
                 downConfig: {
                     max: 3,
@@ -283,21 +293,29 @@
                 }
             },
             methods: {
-                down(url) {
+                down(t) {
+                    const { file, md5 } = t;
                     if (this.loading) return;
-                    this.loading = true;
                     this.isMulti = null;
                     this.realMax = null;
                     this.queue = []
-                    a.down(url, {}, this.downConfig).then((d) => {
+                    this.check = {
+                        target: md5,
+                        result: null
+                    };
+                    this.loading = true;
+                    a.down(`./test/${file}`, {
+                        responseType: 'text'
+                    }, this.downConfig).then((d) => {
                         this.isMulti = d.isMulti;
+                        const hex = SparkMD5.hash(d.data)
+                        this.check.result = hex;
                     }).finally(() => {
                         this.loading = false;
                     })
                 }
             }
         }).mount('#app')
-
 
     </script>
 </body>
