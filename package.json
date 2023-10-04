@@ -19,8 +19,7 @@
         "url": "git+https://github.com/lqzhgood/axios-multi-down.git"
     },
     "files": [
-        "lib",
-        "src"
+        "lib"
     ],
     "main": "./lib/index.umd.js",
     "module": "./lib/AxiosMultiDown.mjs",
