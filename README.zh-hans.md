@@ -10,8 +10,12 @@
 
 ## 安装
 
-```
+```shell
 npm i axios-multi-down
+```
+
+```html
+<script src="https://raw.githubusercontent.com/lqzhgood/axios-multi-down/main/lib/AxiosMultiDown.umd.js"></script>
 ```
 
 ## 使用
