@@ -19,6 +19,7 @@ interface IBlockData {
     e: number;
     i: number;
     resp?: AxiosResponse;
+    down?: () => Promise<IAxiosDownResponse<T>>;
 }
 
 interface IAxiosDownResponse<T = any, D = any> extends AxiosResponse<T, D> {

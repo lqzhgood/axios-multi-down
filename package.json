@@ -34,12 +34,12 @@
     "typings": "./lib/src/index.d.ts",
     "scripts": {
         "dev": "vite --open /test/browser.html",
+        "pretest": "npm run format",
         "test": "jest",
         "server": "ts-node test\\utils\\startServer.ts",
         "build": "vue-tsc --noEmit && vite build",
         "prepare": "husky install",
-        "format": "prettier ./src --write --ignore-unknown",
-        "lint": "eslint ./src --fix",
+        "format": "eslint ./src --fix && prettier ./src --write --ignore-unknown",
         "prerelease": "npm run build",
         "release": "npm version -m \"New version: %s\"",
         "postrelease": "npm publish"

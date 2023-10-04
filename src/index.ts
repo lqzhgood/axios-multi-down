@@ -48,15 +48,15 @@ function AxiosMultiDown(
             const r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
             return r;
         } else {
-            const queueRes = splitArr(contentLength, downConfigUse.blockSize);
-            downConfigUse.max = downConfigUse.max <= queueRes.length ? downConfigUse.max : queueRes.length;
+            const queue = splitArr(contentLength, downConfigUse.blockSize);
+            downConfigUse.max = downConfigUse.max <= queue.length ? downConfigUse.max : queue.length;
 
-            downConfigUse.emitter?.emit('preDown', queueRes, downConfigUse);
+            downConfigUse.emitter?.emit('preDown', queue, downConfigUse);
             let r;
             if (downConfigUse.max === 1) {
                 r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
             } else {
-                r = await downByMulti<T, D>(axios, axiosConfig, downConfigUse, queueRes, contentLength);
+                r = await downByMulti<T, D>(axios, axiosConfig, downConfigUse, queue, contentLength);
             }
             return r;
         }
@@ -161,16 +161,17 @@ function downByMulti<T = any, D = any>(
     axios: AxiosInstance,
     axiosConfig: AxiosRequestConfig<D>,
     downConfig: IDownConfig,
-    queueRes: IBlockData[],
+    queue: IBlockData[],
     totalContentLength: number,
 ): Promise<IAxiosDownResponse<T>> {
-    return new Promise((resolveAll, rejectAll) => {
+    return new Promise(resolveAll => {
         let downResponse: IAxiosDownResponse<T>;
         const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
 
         let curr = 0;
         let active = 0;
-        const queueDown: (() => Promise<IAxiosDownResponse<T>>)[] = queueRes.map(r => {
+
+        queue.forEach(block => {
             const fn = (): Promise<IAxiosDownResponse<T>> =>
                 new Promise(resolve => {
                     curr++;
@@ -178,15 +179,15 @@ function downByMulti<T = any, D = any>(
 
                     const headers = {
                         ...(axiosConfig?.headers || {}),
-                        Range: `bytes=${r.s}-${r.e}`,
+                        Range: `bytes=${block.s}-${block.e}`,
                     };
 
                     axios<any>({ ...axiosConfig, headers, responseType: 'arraybuffer' })
                         .then(resp => {
                             resp.data = resp.data instanceof ArrayBuffer ? new Uint8Array(resp.data) : resp.data;
 
-                            r.resp = resp;
-                            downConfig.emitter?.emit('data', r, queueRes, downConfig);
+                            block.resp = resp;
+                            downConfig.emitter?.emit('data', block, queue, downConfig);
 
                             // 第一个请求作为 down response
                             if (!downResponse) {
@@ -194,15 +195,15 @@ function downByMulti<T = any, D = any>(
                                     ...resp,
                                     isMulti: true,
                                     downConfig,
-                                    queue: queueRes,
+                                    queue: queue,
                                 };
                             }
 
                             // 最后一个请求
-                            if (curr === queueDown.length && active === 1) {
-                                downConfig.emitter?.emit('end', queueRes, downConfig);
+                            if (curr === queue.length && active === 1) {
+                                downConfig.emitter?.emit('end', queue, downConfig);
                                 resp.data = concatUint8Array(
-                                    queueRes.map(v => {
+                                    queue.map(v => {
                                         return v.resp!.data;
                                     }),
                                 );
@@ -231,7 +232,7 @@ function downByMulti<T = any, D = any>(
                                     ...resp,
                                     isMulti: true,
                                     downConfig,
-                                    queue: queueRes,
+                                    queue,
                                 };
 
                                 downResponse.status = 200;
@@ -243,22 +244,21 @@ function downByMulti<T = any, D = any>(
                             resolve(downResponse);
                         })
                         .catch(err => {
-                            //
-                            rejectAll(err);
+                            console.log('down block err', block, err);
                         })
                         .finally(() => {
                             active--;
-                            if (curr < queueDown.length && (active < downConfig.max || downConfig.max === 1)) {
-                                queueDown[curr]();
+                            if (curr < queue.length && (active < downConfig.max || downConfig.max === 1)) {
+                                queue[curr].down!();
                             }
                         });
                 });
 
-            return fn;
+            block.down = fn;
         });
 
         for (let i = 0; i < downConfig.max; i++) {
-            queueDown[i]();
+            queue[i].down!();
         }
     });
 }

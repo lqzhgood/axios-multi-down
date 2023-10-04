@@ -54,9 +54,9 @@ export function splitArr(l: number, size: number): IBlockData[] {
 
     for (let i = 0; i < parts; i++) {
         if (i !== parts - 1) {
-            result.push({ s: size * i, e: size * (i + 1) - 1, i });
+            result.push({ s: size * i, e: size * (i + 1) - 1, i, retry: 0 });
         } else {
-            result.push({ s: size * i, e: l - 1, i });
+            result.push({ s: size * i, e: l - 1, i, retry: 0 });
         }
     }
 
