@@ -26,13 +26,13 @@
     "module": "./lib/AxiosMultiDown.mjs",
     "exports": {
         ".": {
-            "types": "./src/types/axios-down.d.ts",
+            "types": "./lib/src/types/axios-down.d.ts",
             "import": "./lib/AxiosMultiDown.mjs",
             "require": "./lib/AxiosMultiDown.umd.js"
         },
         "./*": "./*"
     },
-    "typings": "./src/types/axios-down.d.ts",
+    "typings": "./lib/src/types/axios-down.d.ts",
     "scripts": {
         "dev": "vite --open /test/browser.html",
         "test": "jest",
