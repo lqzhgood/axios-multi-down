@@ -16,7 +16,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/lqzhgood/axios-multi-down.git"
+        "url": "git+https://github.com/lqzhgood/axios-multi-down.git"
     },
     "files": [
         "lib",
