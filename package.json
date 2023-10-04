@@ -2,7 +2,7 @@
     "name": "axios-multi-down",
     "author": "lqzh",
     "license": "MIT",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Axios plugin, Speed up the download process by using multiple Axios requests to fetch a single file.",
     "keywords": [
         "AxiosMultiDown",
