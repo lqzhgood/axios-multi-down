@@ -80,11 +80,13 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 
 > defaultDownConfig => /src/const.ts
 
-| Name       | Type                     | Default | Description                                                                           | remark                                                                                             |
-| ---------- | ------------------------ | ------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| max        | `Number`                 | `3`     | 最大同时进行下载的数量                                                                | \*1                                                                                                |
-| blockSize  | `Number` `K` `B` `G` `T` | `10M`   | 单个下载的块大小                                                                      | 单位 `byte`                                                                                        |
-| testMethod | `head self`              | `head`  | 用于探测服务器是否支持 `Range` 的HTTP方法， self 代表使用 `AxiosRequestConfig.method` | \*2 如果使用 `self`, 请注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
+| Name          | Type                     | Default | Description                                                                           | remark                                                                                             |
+| ------------- | ------------------------ | ------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| max           | `Number`                 | `3`     | 最大同时进行下载的数量                                                                | \*1                                                                                                |
+| blockSize     | `Number` `K` `B` `G` `T` | `10M`   | 单个下载的块大小                                                                      | 单位 `byte`                                                                                        |
+| testMethod    | `head self`              | `head`  | 用于探测服务器是否支持 `Range` 的HTTP方法， self 代表使用 `AxiosRequestConfig.method` | \*2 如果使用 `self`, 请注意 [幂等性](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
+| maxRetries    | `Number`                 | `3`     | block 下载错误，最大重试次数                                                          | 重试将会在所有 block 下载完后进行                                                                  |
+| retryInterval | `Number`                 | `1000`  | block 下载错误，重试间隔                                                              | 单位 `ms`                                                                                          |
 
 ```
 *1
