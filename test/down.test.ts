@@ -91,4 +91,35 @@ describe('test down method', () => {
             expect(o).toStrictEqual(data);
         });
     });
+
+    //  describe('test down retry', () => {
+    //      const axios = axiosBase.create({});
+    //      axiosMultiDown(axios, {
+    //          blockSize: 10 * 1024 * 1024,
+    //      });
+
+    //      const fileName = '100M.test';
+
+    //      const f = testFile(fileName);
+    //      makeBigFile(f, 100 * 1024 * 1024);
+    //      const _md5File = md5File(f);
+
+    //      jest.setTimeout(5 * 1000);
+
+    //      test('range support', async () => {
+    //          const url = testUrl(fileName, true);
+    //          const { data, isMulti } = await axios.down(url, { responseType: 'text' });
+    //          const _md5String = md5String(data);
+    //          expect(isMulti).toBe(true);
+    //          expect(_md5File).toBe(_md5String);
+    //      });
+
+    //      test('range not support', async () => {
+    //          const url = testUrl(fileName, false);
+    //          const { data, isMulti } = await axios.down(url, { responseType: 'text' });
+    //          const _md5String = md5String(data);
+    //          expect(isMulti).toBe(false);
+    //          expect(_md5File).toBe(_md5String);
+    //      });
+    //  });
 });

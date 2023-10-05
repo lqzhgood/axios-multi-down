@@ -33,7 +33,7 @@
     },
     "typings": "./lib/src/index.d.ts",
     "scripts": {
-        "dev": "vite --open /test/browser.html",
+        "dev": "vite --open /test/e2e/browser.html",
         "pretest": "npm run format",
         "test": "jest",
         "server": "ts-node test\\utils\\startServer.ts",

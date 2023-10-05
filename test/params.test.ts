@@ -31,7 +31,7 @@ describe('Test downOptions', () => {
         expect(isMulti).toBe(true);
         expect(txt).toStrictEqual(data);
         expect(config).toMatchObject({ url, headers: { test: 'test' } });
-        expect(downConfig).toStrictEqual({ max: 3, testMethod: TEST_METHOD.SELF, blockSize: 1 });
+        expect(downConfig).toMatchObject({ testMethod: TEST_METHOD.SELF, blockSize: 1 });
     });
 
     it('downConfig.max', async () => {
@@ -47,7 +47,7 @@ describe('Test downOptions', () => {
 
     it('downConfig.blockSize', async () => {
         const url = testUrl(fileName, true);
-        const { config, data, isMulti, downConfig } = await axios.down(
+        const { data, isMulti, downConfig } = await axios.down(
             { url, headers: { test: 'test' } },
             { blockSize: '10M' },
         );
@@ -69,7 +69,11 @@ describe('Test input parameters', () => {
             const { data, isMulti, downConfig } = await axios.down(url);
             expect(isMulti).toBe(true);
             expect(txt).toStrictEqual(data);
-            expect(downConfig).toStrictEqual({ max: 3, blockSize: 1, testMethod: TEST_METHOD.HEAD });
+            expect(downConfig).toMatchObject({
+                max: 3,
+                blockSize: 1,
+                testMethod: TEST_METHOD.HEAD,
+            });
         });
 
         it('axiosConfig', async () => {

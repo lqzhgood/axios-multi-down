@@ -14,4 +14,6 @@ export const downConfigDefault: IDownConfig = {
     max: 3,
     blockSize: '10M', // 10 * 1024 * 1024
     testMethod: TEST_METHOD.HEAD,
+    maxRetries: 3,
+    retryInterval: 1000,
 };

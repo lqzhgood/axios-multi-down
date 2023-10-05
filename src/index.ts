@@ -1,7 +1,13 @@
 import { AxiosInstance, AxiosRequestConfig, ResponseType, AxiosResponse } from 'axios';
 import { checkDownConfig, concatUint8Array, platform, splitArr } from './utils';
 import { PLATFORM, TEST_METHOD, downConfigDefault } from './const';
-import type { IAxiosDownResponse, IBlockData, IDownConfig, rangeSupportRes } from './types/axios-down';
+import type {
+    IAxiosDownRejectError,
+    IAxiosDownResponse,
+    IBlockData,
+    IDownConfig,
+    rangeSupportRes,
+} from './types/axios-down';
 import { EventEmitter } from './event';
 
 function AxiosMultiDown(
@@ -140,22 +146,47 @@ function testBySelf(axios: AxiosInstance, testAxiosConfig: AxiosRequestConfig): 
     });
 }
 
-async function downByOne<T, D>(
+function downByOne<T, D>(
     axios: AxiosInstance,
     axiosConfig: AxiosRequestConfig<D>,
     downConfig: IDownConfig,
 ): Promise<IAxiosDownResponse<T>> {
-    const resp = await axios<T, any>(axiosConfig);
-    const blockData: IBlockData = { s: 0, e: resp.headers['content-length'] - 1, i: 0, resp: resp };
-    const queue: IBlockData[] = [blockData];
+    let retryCount = 0;
 
-    downConfig.emitter?.emit('data', blockData, queue, downConfig);
-    downConfig.emitter?.emit('end', queue, downConfig);
+    return new Promise((resolve, reject) => {
+        function fn() {
+            axios<T>(axiosConfig)
+                .then(resp => {
+                    const blockData: IBlockData = {
+                        s: 0,
+                        e: resp.headers['content-length'] - 1,
+                        i: 0,
+                        resp: resp,
+                        retryCount: retryCount,
+                    };
+                    const queue: IBlockData[] = [blockData];
 
-    const downResponse = { ...resp, isMulti: false, downConfig, queue: queue };
+                    downConfig.emitter?.emit('data', blockData, queue, downConfig);
+                    downConfig.emitter?.emit('end', queue, downConfig);
 
-    return downResponse;
+                    const downResponse: IAxiosDownResponse<T> = { ...resp, isMulti: false, downConfig, queue: queue };
+                    resolve(downResponse);
+                })
+                .catch((err: IAxiosDownRejectError<T, D>) => {
+                    if (retryCount < downConfig.maxRetries) {
+                        setTimeout(() => {
+                            fn();
+                        }, downConfig.retryInterval);
+                    } else {
+                        reject(err);
+                    }
+                    retryCount++;
+                });
+        }
+        fn();
+    });
 }
+let first = 0;
 
 function downByMulti<T = any, D = any>(
     axios: AxiosInstance,
@@ -164,7 +195,7 @@ function downByMulti<T = any, D = any>(
     queue: IBlockData[],
     totalContentLength: number,
 ): Promise<IAxiosDownResponse<T>> {
-    return new Promise(resolveAll => {
+    return new Promise((resolveAll, rejectAll) => {
         let downResponse: IAxiosDownResponse<T>;
         const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
 
@@ -172,10 +203,14 @@ function downByMulti<T = any, D = any>(
         let active = 0;
 
         queue.forEach(block => {
-            const fn = (): Promise<IAxiosDownResponse<T>> =>
+            const fn = (isRetry: boolean = false): Promise<IAxiosDownResponse<T>> =>
                 new Promise(resolve => {
-                    curr++;
-                    active++;
+                    if (!isRetry) {
+                        // retry 在队列末尾额外进行，curr 仅表示正常下载队列的下标
+                        curr++;
+                        // retry 是延迟且异步的，所以 active 在异步之前已经赋值
+                        active++;
+                    }
 
                     const headers = {
                         ...(axiosConfig?.headers || {}),
@@ -184,12 +219,20 @@ function downByMulti<T = any, D = any>(
 
                     axios<any>({ ...axiosConfig, headers, responseType: 'arraybuffer' })
                         .then(resp => {
+                            if (block.i === 0 && first == 0) {
+                                first++;
+                                throw new Error('i=0');
+                                return;
+                            }
+
                             resp.data = resp.data instanceof ArrayBuffer ? new Uint8Array(resp.data) : resp.data;
 
+                            // 赋值代表这个 block 下载成功
                             block.resp = resp;
                             downConfig.emitter?.emit('data', block, queue, downConfig);
 
-                            // 第一个请求作为 down response
+                            // 第一个请求作为 down response;
+                            // i==0 可能不是第一个下完的
                             if (!downResponse) {
                                 downResponse = {
                                     ...resp,
@@ -200,56 +243,64 @@ function downByMulti<T = any, D = any>(
                             }
 
                             // 最后一个请求
-                            if (curr === queue.length && active === 1) {
-                                downConfig.emitter?.emit('end', queue, downConfig);
-                                resp.data = concatUint8Array(
-                                    queue.map(v => {
-                                        return v.resp!.data;
-                                    }),
-                                );
-                                switch (defaultResponseType) {
-                                    case 'json':
-                                        {
-                                            try {
-                                                resp.data = new TextDecoder('utf-8').decode(resp.data);
-                                                resp.data = JSON.parse(resp.data);
-                                                resp.config.responseType = defaultResponseType;
-                                            } catch (error: any) {
-                                                // ignore error
-                                            }
-                                        }
-                                        break;
-                                    case 'text': {
-                                        resp.data = new TextDecoder('utf-8').decode(resp.data);
-                                        resp.config.responseType = defaultResponseType;
-                                    }
-                                    // eslint-disable-next-line no-fallthrough
-                                    default:
-                                        break;
-                                }
-
+                            if (block.i === queue.length - 1) {
                                 downResponse = {
                                     ...resp,
                                     isMulti: true,
                                     downConfig,
-                                    queue,
+                                    queue: queue,
                                 };
-
-                                downResponse.status = 200;
-                                downResponse.statusText = 'OK';
-                                downResponse.headers['content-type'] = totalContentLength;
-                                resolveAll(downResponse);
                             }
-
                             resolve(downResponse);
                         })
                         .catch(err => {
+                            block.retryCount++;
+                            resolve(downResponse);
                             console.log('down block err', block, err);
+                            return err;
                         })
-                        .finally(() => {
+                        .then((err: IAxiosDownRejectError<T, D>) => {
                             active--;
-                            if (curr < queue.length && (active < downConfig.max || downConfig.max === 1)) {
-                                queue[curr].down!();
+
+                            if (active < downConfig.max) {
+                                // 先执行正常下载的
+                                if (curr < queue.length) {
+                                    queue[curr].down!();
+                                } else {
+                                    // 最后再查找之前未下载完成的
+                                    const fail = queue.find(v => !v.resp && v.retryCount < downConfig.maxRetries);
+                                    if (fail) {
+                                        active++;
+                                        setTimeout(() => {
+                                            fail.down!(true);
+                                        }, downConfig.retryInterval);
+                                    } else {
+                                        // 全部下完
+                                        if (active === 0) {
+                                            if (queue.filter(v => !v.resp).length !== 0) {
+                                                // 如果最后还有没下载完的 抛出异常
+                                                err.downResponse = downResponse;
+                                                rejectAll(err);
+                                            } else {
+                                                downConfig.emitter?.emit('end', queue, downConfig);
+
+                                                (downResponse as IAxiosDownResponse<Uint8Array>).data =
+                                                    concatUint8Array(
+                                                        queue.map(v => {
+                                                            return v.resp!.data;
+                                                        }),
+                                                    );
+
+                                                convertResponseType(downResponse, defaultResponseType);
+
+                                                downResponse.status = 200;
+                                                downResponse.statusText = 'OK';
+                                                downResponse.headers['content-type'] = totalContentLength;
+                                                resolveAll(downResponse);
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         });
                 });
@@ -261,6 +312,30 @@ function downByMulti<T = any, D = any>(
             queue[i].down!();
         }
     });
+}
+
+function convertResponseType(resp: AxiosResponse, defaultResponseType: ResponseType) {
+    switch (defaultResponseType) {
+        case 'json':
+            {
+                try {
+                    resp.data = new TextDecoder('utf-8').decode(resp.data);
+                    resp.data = JSON.parse(resp.data);
+                    resp.config.responseType = defaultResponseType;
+                } catch (error: any) {
+                    // ignore error
+                }
+            }
+            break;
+        case 'text': {
+            resp.data = new TextDecoder('utf-8').decode(resp.data);
+            resp.config.responseType = defaultResponseType;
+        }
+        // eslint-disable-next-line no-fallthrough
+        default:
+            break;
+    }
+    return resp;
 }
 
 AxiosMultiDown.EventEmitter = EventEmitter;

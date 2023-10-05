@@ -54,9 +54,9 @@ export function splitArr(l: number, size: number): IBlockData[] {
 
     for (let i = 0; i < parts; i++) {
         if (i !== parts - 1) {
-            result.push({ s: size * i, e: size * (i + 1) - 1, i, retry: 0 });
+            result.push({ s: size * i, e: size * (i + 1) - 1, i, retryCount: 0 });
         } else {
-            result.push({ s: size * i, e: l - 1, i, retry: 0 });
+            result.push({ s: size * i, e: l - 1, i, retryCount: 0 });
         }
     }
 
@@ -111,4 +111,8 @@ export function blockSizeValue(size: string | number): number {
         return Number(size.match(/\d+/)![0]) * 1024 * 1024 * 1024 * 1024;
     }
     throw new Error(`downConfig.blockSize string only supported K,M,G,T, got ${size}`);
+}
+
+export function sleep(t = 1000) {
+    return new Promise(resolve => setTimeout(resolve, t));
 }

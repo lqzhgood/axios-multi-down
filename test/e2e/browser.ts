@@ -2,7 +2,7 @@ import axiosBase from 'axios';
 
 const axios = axiosBase.create({});
 
-import AxiosMultiDown from '../src/index';
+import AxiosMultiDown from '../../src/index';
 AxiosMultiDown(axios, {
     max: 5,
     blockSize: 20 * 1024 * 1024,
@@ -13,21 +13,21 @@ console.time('use range');
 axios
     .down(
         {
-            // url: 'http://127.0.0.1:3000/test/files/sample.json?useRange=1',
-            url: 'http://127.0.0.1:3000/test/files/100M.test?useRange=1',
-            responseType: 'text',
+            url: 'http://127.0.0.1:3000/test/files/sample.json?useRange=1',
+            // url: 'http://127.0.0.1:3000/test/files/100M.test?useRange=1',
+            // responseType: 'text',
         },
         {
-            testMethod: 'self',
+            max: 5,
             blockSize: 1,
             // emitter,
         },
     )
     .then(d => {
-        console.log('d', d);
+        console.log('ddddddddddddddddddddddddd', d);
     })
     .catch(err => {
-        console.log('err', err);
+        console.log('errrrrrrrrrrrrrrrrrrrrrrrr', err);
     })
     .finally(() => {
         console.timeEnd('use range');

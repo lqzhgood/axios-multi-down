@@ -12,20 +12,27 @@ interface IDownConfig<T = number | string> {
     blockSize: T;
     testMethod: TEST_METHOD;
     emitter?: EventEmitter;
+    maxRetries: number;
+    retryInterval: number;
 }
 
 interface IBlockData {
     s: number;
     e: number;
     i: number;
+    retryCount: number;
     resp?: AxiosResponse;
-    down?: () => Promise<IAxiosDownResponse<T>>;
+    down?: (isRetry: boolean = false) => Promise<IAxiosDownResponse<T>>;
 }
 
 interface IAxiosDownResponse<T = any, D = any> extends AxiosResponse<T, D> {
     isMulti: boolean;
     queue: IBlockData[];
     downConfig: IDownConfig;
+}
+
+interface IAxiosDownRejectError<T = any, D = any> extends any {
+    downResponse?: IAxiosDownResponse<T, D>;
 }
 
 type rangeSupportRes = [boolean, number | null];
