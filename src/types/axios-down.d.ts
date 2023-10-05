@@ -14,6 +14,9 @@ interface IDownConfig<T = number | string> {
     emitter?: EventEmitter;
     maxRetries: number;
     retryInterval: number;
+    onPreDown?: (queue: IBlockData[], config: IDownConfig) => void;
+    onData?: (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void;
+    onEnd?: (queue: IBlockData[], config: IDownConfig) => void;
 }
 
 interface IBlockData {

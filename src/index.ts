@@ -58,6 +58,7 @@ function AxiosMultiDown(
             downConfigUse.max = downConfigUse.max <= queue.length ? downConfigUse.max : queue.length;
 
             downConfigUse.emitter?.emit('preDown', queue, downConfigUse);
+            downConfigUse.onPreDown && downConfigUse.onPreDown(queue, downConfigUse);
             let r;
             if (downConfigUse.max === 1) {
                 r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
@@ -167,7 +168,9 @@ function downByOne<T, D>(
                     const queue: IBlockData[] = [blockData];
 
                     downConfig.emitter?.emit('data', blockData, queue, downConfig);
+                    downConfig.onData && downConfig.onData(blockData, queue, downConfig);
                     downConfig.emitter?.emit('end', queue, downConfig);
+                    downConfig.onEnd && downConfig.onEnd(queue, downConfig);
 
                     const downResponse: IAxiosDownResponse<T> = { ...resp, isMulti: false, downConfig, queue: queue };
                     resolve(downResponse);
@@ -186,7 +189,6 @@ function downByOne<T, D>(
         fn();
     });
 }
-let first = 0;
 
 function downByMulti<T = any, D = any>(
     axios: AxiosInstance,
@@ -219,17 +221,12 @@ function downByMulti<T = any, D = any>(
 
                     axios<any>({ ...axiosConfig, headers, responseType: 'arraybuffer' })
                         .then(resp => {
-                            if (block.i === 0 && first == 0) {
-                                first++;
-                                throw new Error('i=0');
-                                return;
-                            }
-
                             resp.data = resp.data instanceof ArrayBuffer ? new Uint8Array(resp.data) : resp.data;
 
                             // 赋值代表这个 block 下载成功
                             block.resp = resp;
                             downConfig.emitter?.emit('data', block, queue, downConfig);
+                            downConfig.onData && downConfig.onData(block, queue, downConfig);
 
                             // 第一个请求作为 down response;
                             // i==0 可能不是第一个下完的
@@ -283,6 +280,7 @@ function downByMulti<T = any, D = any>(
                                                 rejectAll(err);
                                             } else {
                                                 downConfig.emitter?.emit('end', queue, downConfig);
+                                                downConfig.onEnd && downConfig.onEnd(queue, downConfig);
 
                                                 (downResponse as IAxiosDownResponse<Uint8Array>).data =
                                                     concatUint8Array(
