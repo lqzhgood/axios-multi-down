@@ -9,7 +9,7 @@ AxiosMultiDown(axios, {
 });
 
 console.time('use range');
-
+let retry = 0;
 axios
     .down(
         {
@@ -19,8 +19,17 @@ axios
         },
         {
             max: 5,
+            maxRetries: 10,
             blockSize: 1,
-            // emitter,
+            onData(block) {
+                if (block.i === 0) {
+                    block.resp = undefined; // 模拟下载出错
+                    throw new Error('i=0');
+                }
+            },
+            onBlockError(block) {
+                retry = block.retryCount;
+            },
         },
     )
     .then(d => {
@@ -31,6 +40,7 @@ axios
     })
     .finally(() => {
         console.timeEnd('use range');
+        console.log(retry);
     });
 
 // console.time('not use range');

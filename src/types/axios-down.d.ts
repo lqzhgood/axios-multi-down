@@ -4,19 +4,19 @@ import { EventEmitter } from '../event';
 interface EventsDefault {
     preDown: (queue: IBlockData[], config: IDownConfig) => void;
     data: (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void;
+    blockError: (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void;
     end: (queue: IBlockData[], config: IDownConfig) => void;
 }
 
-interface IDownConfig<T = number | string> {
+type IDownConfigHook = { [K in keyof EventsDefault as `on${Capitalize<K & string>}`]?: EventsDefault[K] };
+
+interface IDownConfig<T = number | string> extends IDownConfigHook {
     max: number;
     blockSize: T;
     testMethod: TEST_METHOD;
     emitter?: EventEmitter;
     maxRetries: number;
     retryInterval: number;
-    onPreDown?: (queue: IBlockData[], config: IDownConfig) => void;
-    onData?: (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void;
-    onEnd?: (queue: IBlockData[], config: IDownConfig) => void;
 }
 
 interface IBlockData {
@@ -26,6 +26,7 @@ interface IBlockData {
     retryCount: number;
     resp?: AxiosResponse;
     down?: (isRetry: boolean = false) => Promise<IAxiosDownResponse<T>>;
+    isDown?: boolean;
 }
 
 interface IAxiosDownResponse<T = any, D = any> extends AxiosResponse<T, D> {

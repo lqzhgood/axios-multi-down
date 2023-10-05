@@ -152,38 +152,49 @@ function downByOne<T, D>(
     axiosConfig: AxiosRequestConfig<D>,
     downConfig: IDownConfig,
 ): Promise<IAxiosDownResponse<T>> {
-    let retryCount = 0;
+    const blockData: IBlockData = {
+        s: 0,
+        e: 0,
+        i: 0,
+        retryCount: 0,
+    };
+    const queue: IBlockData[] = [blockData];
+    let downResponse = { isMulti: false, downConfig, queue: queue };
 
     return new Promise((resolve, reject) => {
         function fn() {
             axios<T>(axiosConfig)
                 .then(resp => {
-                    const blockData: IBlockData = {
-                        s: 0,
-                        e: resp.headers['content-length'] - 1,
-                        i: 0,
-                        resp: resp,
-                        retryCount: retryCount,
-                    };
-                    const queue: IBlockData[] = [blockData];
+                    blockData.isDown = true;
+                    blockData.e = resp.headers['content-length'] - 1;
+                    blockData.resp = resp;
 
                     downConfig.emitter?.emit('data', blockData, queue, downConfig);
                     downConfig.onData && downConfig.onData(blockData, queue, downConfig);
                     downConfig.emitter?.emit('end', queue, downConfig);
                     downConfig.onEnd && downConfig.onEnd(queue, downConfig);
 
-                    const downResponse: IAxiosDownResponse<T> = { ...resp, isMulti: false, downConfig, queue: queue };
-                    resolve(downResponse);
+                    downResponse = { ...resp, ...downResponse };
+                    resolve(downResponse as IAxiosDownResponse<T>);
                 })
-                .catch((err: IAxiosDownRejectError<T, D>) => {
-                    if (retryCount < downConfig.maxRetries) {
+                .catch(err => {
+                    blockData.isDown = false;
+
+                    downConfig.emitter?.emit('blockError', blockData, queue, downConfig);
+                    downConfig.onBlockError && downConfig.onBlockError(blockData, queue, downConfig);
+
+                    if (blockData.retryCount < downConfig.maxRetries) {
+                        blockData.retryCount++;
                         setTimeout(() => {
                             fn();
                         }, downConfig.retryInterval);
                     } else {
-                        reject(err);
+                        if (err.response) {
+                            downResponse = { ...err.response, downResponse };
+                        }
+                        err.downResponse = downResponse;
+                        reject(err as IAxiosDownRejectError<T, D>);
                     }
-                    retryCount++;
                 });
         }
         fn();
@@ -210,8 +221,9 @@ function downByMulti<T = any, D = any>(
                     if (!isRetry) {
                         // retry 在队列末尾额外进行，curr 仅表示正常下载队列的下标
                         curr++;
-                        // retry 是延迟且异步的，所以 active 在异步之前已经赋值
+                        // retry 是延迟且异步的，所以 active 在异步之时已经赋值
                         active++;
+                        block.isDown = true;
                     }
 
                     const headers = {
@@ -225,8 +237,6 @@ function downByMulti<T = any, D = any>(
 
                             // 赋值代表这个 block 下载成功
                             block.resp = resp;
-                            downConfig.emitter?.emit('data', block, queue, downConfig);
-                            downConfig.onData && downConfig.onData(block, queue, downConfig);
 
                             // 第一个请求作为 down response;
                             // i==0 可能不是第一个下完的
@@ -248,56 +258,68 @@ function downByMulti<T = any, D = any>(
                                     queue: queue,
                                 };
                             }
+
+                            downConfig.emitter?.emit('data', block, queue, downConfig);
+                            downConfig.onData && downConfig.onData(block, queue, downConfig);
+
                             resolve(downResponse);
                         })
                         .catch(err => {
-                            block.retryCount++;
+                            downConfig.emitter?.emit('blockError', block, queue, downConfig);
+                            downConfig.onBlockError && downConfig.onBlockError(block, queue, downConfig);
                             resolve(downResponse);
-                            console.log('down block err', block, err);
                             return err;
                         })
-                        .then((err: IAxiosDownRejectError<T, D>) => {
+                        .then(err => {
                             active--;
+                            block.isDown = false;
 
-                            if (active < downConfig.max) {
-                                // 先执行正常下载的
-                                if (curr < queue.length) {
-                                    queue[curr].down!();
+                            if (active >= downConfig.max) {
+                                return;
+                            }
+
+                            // 先执行正常下载的
+                            if (curr < queue.length) {
+                                queue[curr].down!();
+                                return;
+                            }
+
+                            // 最后再查找之前未下载完成的
+                            const fail = queue.find(v => !v.resp && !v.isDown && v.retryCount < downConfig.maxRetries);
+
+                            if (fail) {
+                                active++;
+                                fail.retryCount++;
+                                fail.isDown = true;
+                                setTimeout(() => {
+                                    fail.down!(true);
+                                }, downConfig.retryInterval);
+                            } else {
+                                if (active !== 0) {
+                                    return;
+                                }
+
+                                // 全部下完 返回结果
+                                if (queue.filter(v => !v.resp).length !== 0) {
+                                    // 如果最后还有没下载完的 抛出异常
+                                    err.downResponse = downResponse;
+                                    rejectAll(err as IAxiosDownRejectError<T, D>);
                                 } else {
-                                    // 最后再查找之前未下载完成的
-                                    const fail = queue.find(v => !v.resp && v.retryCount < downConfig.maxRetries);
-                                    if (fail) {
-                                        active++;
-                                        setTimeout(() => {
-                                            fail.down!(true);
-                                        }, downConfig.retryInterval);
-                                    } else {
-                                        // 全部下完
-                                        if (active === 0) {
-                                            if (queue.filter(v => !v.resp).length !== 0) {
-                                                // 如果最后还有没下载完的 抛出异常
-                                                err.downResponse = downResponse;
-                                                rejectAll(err);
-                                            } else {
-                                                downConfig.emitter?.emit('end', queue, downConfig);
-                                                downConfig.onEnd && downConfig.onEnd(queue, downConfig);
+                                    downConfig.emitter?.emit('end', queue, downConfig);
+                                    downConfig.onEnd && downConfig.onEnd(queue, downConfig);
 
-                                                (downResponse as IAxiosDownResponse<Uint8Array>).data =
-                                                    concatUint8Array(
-                                                        queue.map(v => {
-                                                            return v.resp!.data;
-                                                        }),
-                                                    );
+                                    (downResponse as IAxiosDownResponse<Uint8Array>).data = concatUint8Array(
+                                        queue.map(v => {
+                                            return v.resp!.data;
+                                        }),
+                                    );
 
-                                                convertResponseType(downResponse, defaultResponseType);
+                                    convertResponseType(downResponse, defaultResponseType);
 
-                                                downResponse.status = 200;
-                                                downResponse.statusText = 'OK';
-                                                downResponse.headers['content-type'] = totalContentLength;
-                                                resolveAll(downResponse);
-                                            }
-                                        }
-                                    }
+                                    downResponse.status = 200;
+                                    downResponse.statusText = 'OK';
+                                    downResponse.headers['content-type'] = totalContentLength;
+                                    resolveAll(downResponse);
                                 }
                             }
                         });

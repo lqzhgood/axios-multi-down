@@ -1,5 +1,6 @@
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { EventEmitter } from '../event';
+import { TEST_METHOD } from '../const';
 
 interface EventsDefault {
     preDown: (queue: IBlockData[], config: IDownConfig) => void;
@@ -35,12 +36,12 @@ interface AxiosDownMethod {
     <T = any, R = IAxiosDownResponse<T>, D = any>(url: string, config: AxiosRequestConfig<D>): Promise<R>;
     <T = any, R = IAxiosDownResponse<T>, D = any>(
         config: AxiosRequestConfig<D>,
-        downConfig: Partial<IDownConfig> = downConfigGlobal,
+        downConfig: Partial<IDownConfig>,
     ): Promise<R>;
     <T = any, R = IAxiosDownResponse<T>, D = any>(
         url: string,
         config: AxiosRequestConfig<D>,
-        downConfig: Partial<IDownConfig> = downConfigGlobal,
+        downConfig: Partial<IDownConfig>,
     ): Promise<R>;
 }
 
