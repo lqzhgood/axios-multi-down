@@ -1,3 +1,7 @@
 {
-    "cSpell.words": ["codepaths", "tsbuildinfo"]
+    "cSpell.words": ["codepaths", "tsbuildinfo"],
+    "search.exclude": {
+        "**/node_modules/**": true,
+        "**/lib/**": true
+    }
 }
