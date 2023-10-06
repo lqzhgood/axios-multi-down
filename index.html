@@ -273,7 +273,7 @@
             </template>
         </div>
         <div id="down">
-            <div class="block box" v-for="b in downRes" :key="b.i" :class="b.class" @click="retry(b)"></div>
+            <div class="block box" v-for="b in downRes" :key="b.i" @mouseenter="blockInfo($event,b)" :class="b.class" @click="retry(b)"></div>
         </div>
     </div>
     <script src="./lib/vue.global.js"></script>
@@ -300,7 +300,7 @@
                 })
 
                 emitter.on('end', (queue, config) => {
-                    console.log('end',);
+                    console.log('end', queue);
                 })
 
                 AxiosMultiDown(a, {
@@ -371,8 +371,8 @@
                     }, {
                         ..._this.downConfig,
 
-                        onData(block) {
-                            if (block.i === 0 && _this.downErrFlag) {
+                        onData(block,) {
+                            if (block.i === 0 && _this.downConfig.errMode === _this.ERROR_MODE.WAIT && _this.downErrFlag) {
                                 block.resp = undefined;
                                 throw new Error('down err')
                             }
@@ -392,6 +392,10 @@
                         this.downErrFlag = false;
                         AxiosMultiDown.RetryQueue([this.queue[b.i]], { max: 3 });
                     }
+                },
+                blockInfo($event, b) {
+                    const queue = this.queue;
+                    $event.target.title = JSON.stringify(queue[b.i], Object.keys(queue[b.i]).filter(v => !['resp', 'down'].includes(v)), 4)
                 }
             }
         }).mount('#app')
