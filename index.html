@@ -8,6 +8,10 @@
     <meta http-equiv="Cache-Control" content="no-siteapp" />
     <title>Demo</title>
     <style>
+        [v-cloak] {
+            display: none
+        }
+
         #config {
             margin-bottom: 20px;
         }
@@ -56,7 +60,7 @@
 
             transform: scale(0.8);
             top: 3px;
-            background-image: linear-gradient(bottom, rgb(62, 184, 229) 0%, rgb(44, 160, 202) 100%);
+            background-image: linear-gradient(to top, rgb(62, 184, 229) 0%, rgb(44, 160, 202) 100%);
             box-shadow: inset 0px 1px 0px #2ab7ec, 0px 2px 0px 0px #156785, 0px 5px 3px #999;
             opacity: 0.3;
         }
@@ -87,7 +91,7 @@
 
         .box.ok {
             transform: scale(1);
-            background-image: linear-gradient(bottom, rgb(44, 160, 202) 0%, rgb(62, 184, 229) 100%);
+            background-image: linear-gradient(to top, rgb(44, 160, 202) 0%, rgb(62, 184, 229) 100%);
             box-shadow: inset 0px 1px 0px #2ab7ec, 0px 5px 0px 0px #156785, 0px 10px 5px #999;
             opacity: 1;
             animation: scale 0.3s ease-out;
@@ -96,9 +100,27 @@
         .box.ok:active {
             transform: scale(0.8) !important;
             top: 3px;
-            background-image: linear-gradient(bottom, rgb(62, 184, 229) 0%, rgb(44, 160, 202) 100%);
+            background-image: linear-gradient(to top, rgb(62, 184, 229) 0%, rgb(44, 160, 202) 100%);
             box-shadow: inset 0px 1px 0px #2ab7ec, 0px 2px 0px 0px #156785, 0px 5px 3px #999;
             opacity: 0.3;
+        }
+
+        .box.error {
+            transform: scale(1);
+            background-image: linear-gradient(to top, rgb(202, 44, 44) 0%, rgb(229, 62, 62) 100%);
+            box-shadow: inset 0px 1px 0px #ec2a2a, 0px 5px 0px 0px #851515, 0px 10px 5px #999;
+            opacity: 1;
+            animation: scale 0.3s ease-out;
+            cursor: pointer;
+        }
+
+        .box.error:active {
+            transform: scale(0.8) !important;
+            top: 3px;
+            background-image: linear-gradient(to top, rgb(229, 62, 62) 0%, rgb(202, 44, 44) 100%);
+            box-shadow: inset 0px 1px 0px #ec2a2a, 0px 2px 0px 0px #851515, 0px 5px 3px #999;
+            opacity: 0.3;
+            cursor: pointer;
         }
 
         @keyframes scale {
@@ -201,7 +223,7 @@
 <body>
     <h1 style="text-align:center"><a href="https://github.com/lqzhgood/axios-multi-down/" target="_blank">axios-multi-down</a></h1>
 
-    <div id="app">
+    <div id="app" v-cloak>
         <div id="config">
             <fieldset :disabled="loading">
                 <legend>downConfig</legend>
@@ -218,6 +240,14 @@
                 </label>
                 <br />
                 <label>testMethod: {{downConfig.testMethod}}</label>
+                <br />
+                <label>
+                    errMode: {{downConfig.errMode}}
+                    <button @click="downConfig.errMode = ERROR_MODE.RETURN" :style="{opacity: downConfig.errMode === ERROR_MODE.RETURN  ? 1 : 0.5 }">RETURN</button>
+                    <button @click="downConfig.errMode = ERROR_MODE.WAIT" :style=" {opacity: downConfig.errMode===ERROR_MODE.WAIT ? 1 : 0.5}">WAIT</button>
+
+                    <span style="margin-left: 20px" v-if="this.downConfig.errMode === ERROR_MODE.WAIT">In ERROR_MODE.WAIT, you can click red block to manual retry.</span>
+                </label>
             </fieldset>
         </div>
 
@@ -232,16 +262,25 @@
             </div>
         </div>
 
-        <div id="check" :style="{color: check.target === check.result ? 'green' : 'red'}">md5: {{check.target}} === {{check.result}}</div>
+        <div id="check" :style="{color: check.target === check.result ? 'green' : 'red'}">
+            <div v-if="loading">
+                <span>Downloading... </span>
+                <br />
+            </div>
+            <template v-else>
+                <div class="tips">{{tips}}</div>
+                <div> md5: {{check.target}} === {{check.result}}</div>
+            </template>
+        </div>
         <div id="down">
-            <div class="block box" v-for="(b,i) in downRes" :key="i" :class="{ok: b}"></div>
+            <div class="block box" v-for="b in downRes" :key="b.i" :class="b.class" @click="retry(b)"></div>
         </div>
     </div>
     <script src="./lib/vue.global.js"></script>
     <script src="./lib/spark-md5.min.js"></script>
     <script src="./lib/axios.min.js"></script>
 
-    <script src="./AxiosMultiDown.umd.js"></script>
+    <script src="https://unpkg.com/axios-multi-down/lib/AxiosMultiDown.umd.js"></script>
     <script>
         const { createApp } = Vue;
 
@@ -269,6 +308,7 @@
                 });
             },
             data: () => ({
+                ERROR_MODE: AxiosMultiDown.const.ERROR_MODE,
                 test: [
                     { file: '1m', md5: "b6d81b360a5672d80c27430f39153e2c" },
                     { file: '10m', md5: "f1c9645dbc14efddc7d8a322685f26eb" },
@@ -282,37 +322,76 @@
                 downConfig: {
                     max: 3,
                     blockSize: 100 * 1024,
-                    testMethod: 'head',
+                    maxRetries: 3,
+                    testMethod: AxiosMultiDown.const.TEST_METHOD.HEAD,
+                    errMode: AxiosMultiDown.const.ERROR_MODE.RETURN
                 },
-                queue: []
+                queue: [],
+                tips: '',
+                downErrFlag: true,
             }),
             computed: {
                 downRes() {
-                    const v = this.queue.map(d => !!d.resp);
+                    const v = this.queue.map(d => {
+                        o = {
+                            i: d.i,
+                            class: '',
+                        }
+
+                        if (d.resp) {
+                            o.class = 'ok'
+                        } else {
+                            if (d.retryCount >= this.downConfig.maxRetries) {
+                                o.class = "error"
+                            }
+                        }
+                        return o;
+                    });
                     return v;
                 }
             },
             methods: {
                 down(t) {
+                    const _this = this;
                     const { file, md5 } = t;
-                    if (this.loading) return;
-                    this.isMulti = null;
-                    this.realMax = null;
-                    this.queue = []
-                    this.check = {
+                    if (_this.loading) return;
+                    _this.isMulti = null;
+                    _this.realMax = null;
+                    _this.queue = []
+                    _this.check = {
                         target: md5,
                         result: null
                     };
-                    this.loading = true;
+                    _this.tips = '';
+                    _this.downErrFlag = true;
+
+                    _this.loading = true;
                     a.down(`./test/${file}`, {
                         responseType: 'text'
-                    }, this.downConfig).then((d) => {
-                        this.isMulti = d.isMulti;
+                    }, {
+                        ..._this.downConfig,
+
+                        onData(block) {
+                            if (block.i === 0 && _this.downErrFlag) {
+                                block.resp = undefined;
+                                throw new Error('down err')
+                            }
+                        }
+                    }).then((d) => {
+                        _this.isMulti = d.isMulti;
                         const hex = SparkMD5.hash(d.data)
-                        this.check.result = hex;
+                        _this.check.result = hex;
+                    }).catch((err) => {
+                        _this.tips = 'down err' + err.message;
                     }).finally(() => {
-                        this.loading = false;
+                        _this.loading = false;
                     })
+                },
+                retry(b) {
+                    if (this.downConfig.errMode === AxiosMultiDown.const.ERROR_MODE.WAIT && b.class === 'error') {
+                        this.downErrFlag = false;
+                        AxiosMultiDown.RetryQueue([this.queue[b.i]], { max: 3 });
+                    }
                 }
             }
         }).mount('#app')
