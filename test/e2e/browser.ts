@@ -18,17 +18,32 @@ axios
             // responseType: 'text',
         },
         {
-            max: 5,
-            maxRetries: 10,
+            max: 1,
+            maxRetries: 3,
             blockSize: 1,
+            // errMode: 'WAIT',
+
             onData(block) {
-                if (block.i === 0) {
+                // @ts-ignore
+                if (!window.aa) {
                     block.resp = undefined; // 模拟下载出错
                     throw new Error('i=0');
                 }
             },
             onBlockError(block) {
                 retry = block.retryCount;
+            },
+            onFinishErr(eQ, queue, config) {
+                console.log(eQ);
+
+                setTimeout(() => {
+                    console.log(11111111);
+                    AxiosMultiDown.RetryQueue(eQ, config);
+                }, 5 * 1000);
+
+                setTimeout(() => {
+                    window.aa = 1;
+                }, 50 * 1000);
             },
         },
     )

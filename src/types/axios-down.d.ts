@@ -6,17 +6,21 @@ interface EventsDefault {
     data: (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void;
     blockError: (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void;
     end: (queue: IBlockData[], config: IDownConfig) => void;
+    finishErr: (errQueue: IBlockData[], queue: IBlockData[], config: IDownConfig) => void;
 }
 
-type IDownConfigHook = { [K in keyof EventsDefault as `on${Capitalize<K & string>}`]?: EventsDefault[K] };
+type IDownConfigOnHook = { [K in keyof EventsDefault as `on${Capitalize<K & string>}`]?: EventsDefault[K] };
+type IDownConfigOnceHook = { [K in keyof EventsDefault as `once${Capitalize<K & string>}`]?: EventsDefault[K] };
 
-interface IDownConfig<T = number | string> extends IDownConfigHook {
+//  extends IDownConfigHook
+interface IDownConfig extends IDownConfigOnHook, IDownConfigOnceHook {
     max: number;
-    blockSize: T;
+    blockSize: number | string;
     testMethod: TEST_METHOD;
     emitter?: EventEmitter;
     maxRetries: number;
     retryInterval: number;
+    errMode: ERROR_MODE;
 }
 
 interface IBlockData {

@@ -1,8 +1,13 @@
 import type { IDownConfig } from './types/axios-down';
 
+export enum ERROR_MODE {
+    RETURN = 'RETURN',
+    WAIT = 'WAIT',
+}
+
 export enum TEST_METHOD {
-    HEAD = 'head',
-    SELF = 'self',
+    HEAD = 'HEAD',
+    SELF = 'SELF',
 }
 
 export enum PLATFORM {
@@ -16,4 +21,5 @@ export const downConfigDefault: IDownConfig = {
     testMethod: TEST_METHOD.HEAD,
     maxRetries: 3,
     retryInterval: 1000,
+    errMode: ERROR_MODE.RETURN,
 };

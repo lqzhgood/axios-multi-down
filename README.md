@@ -80,13 +80,15 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 
 > defaultDownConfig => /src/const.ts
 
-| Name          | Type                     | Default | Description                                                                                                   | remark                                                                                                                         |
-| ------------- | ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| max           | `Number`                 | `3`     | The maximum number of simultaneous downloads                                                                  | \*1                                                                                                                            |
-| blockSize     | `Number` `K` `B` `G` `T` | `10M`   | The size of individual download blocks                                                                        | unit `byte`                                                                                                                    |
-| testMethod    | `head self`              | `head`  | HTTP method used to check if the server supports the `Range` header.， self means `AxiosRequestConfig.method` | \*2 If using `self`, please be aware of idempotence [Idempotent](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
-| maxRetries    | `Number`                 | `3`     | block down err, max retry down count                                                                          | 重试将会在所有 block 下载完后进行                                                                                              |
-| retryInterval | `Number`                 | `1000`  | block down err, retry interval                                                                                | unit `ms`                                                                                                                      |
+| Name          | Type                     | Default             | Description                                                                                                   | remark                                                                                                                         |
+| ------------- | ------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| max           | `Number`                 | `3`                 | The maximum number of simultaneous downloads                                                                  | \*1                                                                                                                            |
+| blockSize     | `Number` `K` `B` `G` `T` | `10M`               | The size of individual download blocks                                                                        | unit `byte`                                                                                                                    |
+| testMethod    | `TEST_METHOD`            | `TEST_METHOD.HEAD`  | HTTP method used to check if the server supports the `Range` header.， self means `AxiosRequestConfig.method` | \*2 If using `self`, please be aware of idempotence [Idempotent](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent) |
+| maxRetries    | `Number`                 | `3`                 | block down err, max retry down count                                                                          | 重试将会在所有 block 下载完后进行                                                                                              |
+| retryInterval | `Number`                 | `1000`              | block down err, retry interval                                                                                | unit `ms`                                                                                                                      |
+| errMode       | `ERROR_MODE`             | `ERROR_MODE.RETURN` | How to handle when all block parts are fail downloaded                                                        | \*3 If set to 'WAIT', you can manually retry through 'onFinishErr'                                                             |
+| $Hook         | `Function`               | -                   | Similar to `Event`, e.g. `on('data',fn)` -> onData(fn), onceData(fn)                                          | `Hook 'is sync,' Event 'is async                                                                                               |
 
 ```
 *1
@@ -101,7 +103,43 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 *2
     The browser environment will enforce the use of the HEAD method because 'responseType === 'stream'' is not currently supported.
 
+*3
+    let retry = 0
+    const resp = await axios.down( url , {
+            maxRetries: 10,
+            errMode: AxiosMultiDown.const.ERROR_MODE.WAIT // important
+            onFinishErr(errorQueue, queue, downConfig) {
+                // This will download all blocks
+                // and retry each block 10 times.
+                // After that, manually retry 3 more times
+                while( retry++ < 3){
+                    axiosMultiDown.RetryQueue(eQ, downConfig);
+                }
+            },
+        },
+    );
+
+    // If successful, you will receive resp, but if the download fails, you will never be here
+    console.log(resp);
 ```
+
+##### CONST
+
+###### TEST_METHOD
+
+> DownConfig.testMethod = AxiosMultiDown.const.TEST_METHOD
+
+| Name | Description |
+| ---- | ----------- |
+| HEAD |             |
+| SELF |             |
+
+> DownConfig.errMode = AxiosMultiDown.const.ERROR_MODE
+
+| Name   | Description                                                                            |
+| ------ | -------------------------------------------------------------------------------------- |
+| RETURN | Immediate error returned, download aborted                                             |
+| WAIT   | Waiting for manual processing, can be manually retried in conjunction with onFinishErr |
 
 #### IBlockData
 
@@ -143,13 +181,17 @@ The `...axiosResponse` portion will be overwritten twice
 ```js
 const emitter = new AxiosMultiDown.EventEmitter();
 
-emitter.on('preDown', (queue: IBlockData[], config: IDownConfig)=>{})
-emitter.on('data', (block: IBlockData, queue: IBlockData[], config: IDownConfig)
-emitter.on('end', (queue: IBlockData[], config: IDownConfig)=>{})
+emitter.on('preDown', (queue: IBlockData[], config: IDownConfig) => void)
+emitter.on('data', (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void)
+emitter.on('blockError', (block: IBlockData, queue: IBlockData[], config: IDownConfig) => void)
+emitter.on('end', (queue: IBlockData[], config: IDownConfig) => void)
+emitter.on('finishErr', (errQueue: IBlockData[], queue: IBlockData[], config: IDownConfig) => void)
 
 axios.down( '/test', {} , { emitter } )
 
 ```
+
+> The `emitter.once` and `emitter.on` parameters are the same, but only executed once
 
 ## Important
 

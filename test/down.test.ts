@@ -266,4 +266,85 @@ describe('test down method', () => {
             expect(o).toStrictEqual(data);
         });
     });
+
+    describe('test errMode = WAIT', () => {
+        const axios = axiosBase.create({});
+        axiosMultiDown(axios, {
+            blockSize: 10 * 1024 * 1024,
+            errMode: axiosMultiDown.const.ERROR_MODE.WAIT,
+        });
+
+        const fileName = 'sample.json';
+
+        const f = testFile(fileName);
+        const o = {
+            a: 123,
+            b: true,
+            c: 'string',
+            d: ['1', 123, true],
+            e: {
+                a: 123,
+                b: true,
+                c: 'string',
+            },
+        };
+        fs.writeFileSync(f, JSON.stringify(o));
+        const url = testUrl(fileName, true);
+
+        jest.setTimeout(60 * 1000);
+
+        test('single down succ', async () => {
+            let downErr = true;
+            setTimeout(() => {
+                downErr = false;
+            }, 30 * 1000);
+
+            const { data, isMulti } = await axios.down(
+                { url },
+                {
+                    max: 1,
+                    blockSize: 100,
+                    onData(block) {
+                        if (downErr) {
+                            block.resp = undefined; // 模拟下载出错
+                            throw new Error('down err');
+                        }
+                    },
+                    onFinishErr(eQ, queue, config) {
+                        axiosMultiDown.RetryQueue(eQ, config);
+                    },
+                },
+            );
+
+            expect(isMulti).toBe(false);
+            expect(o).toStrictEqual(data);
+        });
+
+        test('multi down succ', async () => {
+            let downErr = true;
+            setTimeout(() => {
+                downErr = false;
+            }, 30 * 1000);
+
+            const { data, isMulti } = await axios.down(
+                { url },
+                {
+                    max: 10,
+                    blockSize: 10,
+                    onData(block) {
+                        if (downErr) {
+                            block.resp = undefined; // 模拟下载出错
+                            throw new Error('down err');
+                        }
+                    },
+                    onFinishErr(eQ, queue, config) {
+                        axiosMultiDown.RetryQueue(eQ, config);
+                    },
+                },
+            );
+
+            expect(isMulti).toBe(true);
+            expect(o).toStrictEqual(data);
+        });
+    });
 });

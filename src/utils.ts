@@ -88,7 +88,7 @@ export function checkDownConfig(o: IDownConfig) {
     if (![TEST_METHOD.HEAD, TEST_METHOD.SELF].includes(o.testMethod)) {
         throw new Error(`downConfig.testMethod must be head | self , got ${o.testMethod}`);
     }
-    return o as IDownConfig<number>;
+    return o as IDownConfig;
 }
 
 export function blockSizeValue(size: string | number): number {
@@ -115,4 +115,8 @@ export function blockSizeValue(size: string | number): number {
 
 export function sleep(t = 1000) {
     return new Promise(resolve => setTimeout(resolve, t));
+}
+
+export function capitalizeFirstLetter<T extends string>(str: T): Capitalize<T> {
+    return (str.charAt(0).toUpperCase() + str.slice(1)) as Capitalize<T>;
 }

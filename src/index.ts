@@ -1,7 +1,8 @@
 import { AxiosInstance, AxiosRequestConfig, ResponseType, AxiosResponse } from 'axios';
-import { checkDownConfig, concatUint8Array, platform, splitArr } from './utils';
-import { PLATFORM, TEST_METHOD, downConfigDefault } from './const';
+import { capitalizeFirstLetter, checkDownConfig, concatUint8Array, platform, splitArr } from './utils';
+import { ERROR_MODE, PLATFORM, TEST_METHOD, downConfigDefault } from './const';
 import type {
+    EventsDefault,
     IAxiosDownRejectError,
     IAxiosDownResponse,
     IBlockData,
@@ -54,11 +55,11 @@ function AxiosMultiDown(
             const r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
             return r;
         } else {
-            const queue = splitArr(contentLength, downConfigUse.blockSize);
+            const queue = splitArr(contentLength, downConfigUse.blockSize as number);
             downConfigUse.max = downConfigUse.max <= queue.length ? downConfigUse.max : queue.length;
 
-            downConfigUse.emitter?.emit('preDown', queue, downConfigUse);
-            downConfigUse.onPreDown && downConfigUse.onPreDown(queue, downConfigUse);
+            downEventAndHook(downConfigUse, 'preDown', queue, downConfigUse);
+
             let r;
             if (downConfigUse.max === 1) {
                 r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
@@ -163,25 +164,23 @@ function downByOne<T, D>(
 
     return new Promise((resolve, reject) => {
         function fn() {
-            axios<T>(axiosConfig)
+            return axios<T>(axiosConfig)
                 .then(resp => {
                     blockData.isDown = true;
                     blockData.e = resp.headers['content-length'] - 1;
                     blockData.resp = resp;
 
-                    downConfig.emitter?.emit('data', blockData, queue, downConfig);
-                    downConfig.onData && downConfig.onData(blockData, queue, downConfig);
-                    downConfig.emitter?.emit('end', queue, downConfig);
-                    downConfig.onEnd && downConfig.onEnd(queue, downConfig);
+                    downEventAndHook(downConfig, 'data', blockData, queue, downConfig);
+                    downEventAndHook(downConfig, 'end', queue, downConfig);
 
                     downResponse = { ...resp, ...downResponse };
                     resolve(downResponse as IAxiosDownResponse<T>);
+                    return downResponse as IAxiosDownResponse<T>;
                 })
                 .catch(err => {
                     blockData.isDown = false;
 
-                    downConfig.emitter?.emit('blockError', blockData, queue, downConfig);
-                    downConfig.onBlockError && downConfig.onBlockError(blockData, queue, downConfig);
+                    downEventAndHook(downConfig, 'blockError', blockData, queue, downConfig);
 
                     if (blockData.retryCount < downConfig.maxRetries) {
                         blockData.retryCount++;
@@ -193,10 +192,21 @@ function downByOne<T, D>(
                             downResponse = { ...err.response, downResponse };
                         }
                         err.downResponse = downResponse;
-                        reject(err as IAxiosDownRejectError<T, D>);
+                        if (downConfig.errMode !== ERROR_MODE.WAIT) {
+                            reject(err as IAxiosDownRejectError<T, D>);
+                        }
+                        downEventAndHook(
+                            downConfig,
+                            'finishErr',
+                            queue.filter(v => !v.resp),
+                            queue,
+                            downConfig,
+                        );
                     }
+                    return downResponse as IAxiosDownResponse<T>;
                 });
         }
+        blockData.down = fn;
         fn();
     });
 }
@@ -223,8 +233,8 @@ function downByMulti<T = any, D = any>(
                         curr++;
                         // retry 是延迟且异步的，所以 active 在异步之时已经赋值
                         active++;
-                        block.isDown = true;
                     }
+                    block.isDown = true;
 
                     const headers = {
                         ...(axiosConfig?.headers || {}),
@@ -259,21 +269,19 @@ function downByMulti<T = any, D = any>(
                                 };
                             }
 
-                            downConfig.emitter?.emit('data', block, queue, downConfig);
-                            downConfig.onData && downConfig.onData(block, queue, downConfig);
+                            downEventAndHook(downConfig, 'data', block, queue, downConfig);
 
                             resolve(downResponse);
                         })
                         .catch(err => {
-                            downConfig.emitter?.emit('blockError', block, queue, downConfig);
-                            downConfig.onBlockError && downConfig.onBlockError(block, queue, downConfig);
+                            downEventAndHook(downConfig, 'blockError', block, queue, downConfig);
+
                             resolve(downResponse);
                             return err;
                         })
                         .then(err => {
                             active--;
                             block.isDown = false;
-
                             if (active >= downConfig.max) {
                                 return;
                             }
@@ -286,7 +294,6 @@ function downByMulti<T = any, D = any>(
 
                             // 最后再查找之前未下载完成的
                             const fail = queue.find(v => !v.resp && !v.isDown && v.retryCount < downConfig.maxRetries);
-
                             if (fail) {
                                 active++;
                                 fail.retryCount++;
@@ -301,12 +308,20 @@ function downByMulti<T = any, D = any>(
 
                                 // 全部下完 返回结果
                                 if (queue.filter(v => !v.resp).length !== 0) {
-                                    // 如果最后还有没下载完的 抛出异常
-                                    err.downResponse = downResponse;
-                                    rejectAll(err as IAxiosDownRejectError<T, D>);
+                                    if (downConfig.errMode !== ERROR_MODE.WAIT) {
+                                        // 如果最后还有没下载完的 抛出异常
+                                        err.downResponse = downResponse;
+                                        rejectAll(err as IAxiosDownRejectError<T, D>);
+                                    }
+                                    downEventAndHook(
+                                        downConfig,
+                                        'finishErr',
+                                        queue.filter(v => !v.resp),
+                                        queue,
+                                        downConfig,
+                                    );
                                 } else {
-                                    downConfig.emitter?.emit('end', queue, downConfig);
-                                    downConfig.onEnd && downConfig.onEnd(queue, downConfig);
+                                    downEventAndHook(downConfig, 'end', queue, downConfig);
 
                                     (downResponse as IAxiosDownResponse<Uint8Array>).data = concatUint8Array(
                                         queue.map(v => {
@@ -334,6 +349,25 @@ function downByMulti<T = any, D = any>(
     });
 }
 
+function downEventAndHook<K extends keyof EventsDefault>(
+    downConfig: IDownConfig,
+    name: K,
+    ...args: Parameters<EventsDefault[K]>
+) {
+    downConfig.emitter?.emit(name, ...args);
+
+    const onHookName = ('on' + capitalizeFirstLetter<K>(name)) as `on${Capitalize<K>}`;
+    const onHookFn = downConfig[onHookName] as EventsDefault[K];
+    // @ts-ignore
+    onHookFn && onHookFn(...args);
+
+    const onceHookName = ('once' + capitalizeFirstLetter<K>(name)) as `once${Capitalize<K>}`;
+    const onceHookFn = downConfig[onceHookName] as EventsDefault[K];
+    // @ts-ignore
+    onceHookFn && onceHookFn(...args);
+    downConfig[onceHookName] = undefined;
+}
+
 function convertResponseType(resp: AxiosResponse, defaultResponseType: ResponseType) {
     switch (defaultResponseType) {
         case 'json':
@@ -358,6 +392,24 @@ function convertResponseType(resp: AxiosResponse, defaultResponseType: ResponseT
     return resp;
 }
 
+function RetryQueue(errQueue: IBlockData[], config: IDownConfig): void {
+    errQueue = errQueue.filter(v => !v.resp);
+
+    for (let i = 0; i < errQueue.length; i++) {
+        const b = errQueue[i];
+        b.retryCount = 0;
+    }
+    for (let i = 0; i < Math.min(config.max, errQueue.length); i++) {
+        const b = errQueue[i];
+        b.down!();
+    }
+}
+
 AxiosMultiDown.EventEmitter = EventEmitter;
+AxiosMultiDown.RetryQueue = RetryQueue;
+AxiosMultiDown.const = {
+    ERROR_MODE,
+    TEST_METHOD,
+};
 
 export default AxiosMultiDown;

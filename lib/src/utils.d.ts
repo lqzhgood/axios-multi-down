@@ -13,5 +13,7 @@ export declare const platform: PLATFORM | undefined;
 export declare function splitRangeArr(n: number, m: number): string[];
 export declare function splitArr(l: number, size: number): IBlockData[];
 export declare function concatUint8Array(arr: Uint8Array[]): Uint8Array;
-export declare function checkDownConfig(o: IDownConfig): IDownConfig<number>;
+export declare function checkDownConfig(o: IDownConfig): IDownConfig;
 export declare function blockSizeValue(size: string | number): number;
+export declare function sleep(t?: number): Promise<unknown>;
+export declare function capitalizeFirstLetter<T extends string>(str: T): Capitalize<T>;
