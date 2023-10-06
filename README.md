@@ -123,9 +123,9 @@ axios.down( url , AxiosRequestConfig, DownConfig )
     console.log(resp);
 ```
 
-##### CONST
+#### CONST
 
-###### TEST_METHOD
+##### TEST_METHOD
 
 > DownConfig.testMethod = AxiosMultiDown.const.TEST_METHOD
 
@@ -133,6 +133,8 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 | ---- | ----------- |
 | HEAD |             |
 | SELF |             |
+
+##### ERROR_MODE
 
 > DownConfig.errMode = AxiosMultiDown.const.ERROR_MODE
 

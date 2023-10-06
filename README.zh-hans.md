@@ -132,6 +132,8 @@ axios.down( url , AxiosRequestConfig, DownConfig )
 | HEAD |             |
 | SELF |             |
 
+##### ERROR_MODE
+
 > DownConfig.errMode = AxiosMultiDown.const.ERROR_MODE
 
 | Name   | Description                                 |
