@@ -223,6 +223,7 @@
 <body>
     <h1 style="text-align:center"><a href="https://github.com/lqzhgood/axios-multi-down/" target="_blank">axios-multi-down</a></h1>
 
+    <div id="init">loading...</div>
     <div id="app" v-cloak>
         <div id="config">
             <fieldset :disabled="loading">
@@ -289,6 +290,9 @@
 
         createApp({
             mounted() {
+
+                document.querySelector("#init").remove();
+
                 const emitter = new AxiosMultiDown.EventEmitter();
                 emitter.on('preDown', (queue, config) => {
                     this.realMax = config.max;
