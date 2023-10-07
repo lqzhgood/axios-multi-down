@@ -23,6 +23,7 @@ function AxiosMultiDown(
         let axiosConfig: AxiosRequestConfig<D> = {};
         let _downConfigUse: IDownConfig = { ...downConfigDefault, ...downConfigGlobal };
 
+        // 参数处理
         if (arguments.length === 1) {
             if (typeof configOrUrl === 'string') {
                 axiosConfig = { url: configOrUrl };
@@ -47,6 +48,7 @@ function AxiosMultiDown(
             _downConfigUse = { ..._downConfigUse, ...downConfig };
         }
 
+        // begin
         const downConfigUse = checkDownConfig(_downConfigUse);
 
         const [isSupport, contentLength] = await testRangeSupport<D>(axios, downConfigUse, axiosConfig);
@@ -286,13 +288,13 @@ function downByMulti<T = any, D = any>(
                                 return;
                             }
 
-                            // 先执行正常下载的
+                            // 先执行正常下载队列
                             if (curr < queue.length) {
                                 queue[curr].down!();
                                 return;
                             }
 
-                            // 最后再查找之前未下载完成的
+                            // 最后再查找之前下载失败的， 进行重试
                             const fail = queue.find(v => !v.resp && !v.isDown && v.retryCount < downConfig.maxRetries);
                             if (fail) {
                                 active++;
@@ -301,42 +303,46 @@ function downByMulti<T = any, D = any>(
                                 setTimeout(() => {
                                     fail.down!(true);
                                 }, downConfig.retryInterval);
-                            } else {
-                                if (active !== 0) {
-                                    return;
-                                }
-
-                                // 全部下完 返回结果
-                                if (queue.filter(v => !v.resp).length !== 0) {
-                                    if (downConfig.errMode !== ERROR_MODE.WAIT) {
-                                        // 如果最后还有没下载完的 抛出异常
-                                        err.downResponse = downResponse;
-                                        rejectAll(err as IAxiosDownRejectError<T, D>);
-                                    }
-                                    downEventAndHook(
-                                        downConfig,
-                                        'finishErr',
-                                        queue.filter(v => !v.resp),
-                                        queue,
-                                        downConfig,
-                                    );
-                                } else {
-                                    downEventAndHook(downConfig, 'end', queue, downConfig);
-
-                                    (downResponse as IAxiosDownResponse<Uint8Array>).data = concatUint8Array(
-                                        queue.map(v => {
-                                            return v.resp!.data;
-                                        }),
-                                    );
-
-                                    convertResponseType(downResponse, defaultResponseType);
-
-                                    downResponse.status = 200;
-                                    downResponse.statusText = 'OK';
-                                    downResponse.headers['content-type'] = totalContentLength;
-                                    resolveAll(downResponse);
-                                }
+                                return;
                             }
+
+                            // 全部下载完成
+                            if (active !== 0) {
+                                return;
+                            }
+
+                            // 全部下完 但 有一些失败 返回结果
+                            if (queue.filter(v => !v.resp).length !== 0) {
+                                if (downConfig.errMode !== ERROR_MODE.WAIT) {
+                                    // 如果最后还有没下载完的 抛出异常
+                                    err.downResponse = downResponse;
+                                    rejectAll(err as IAxiosDownRejectError<T, D>);
+                                }
+                                downEventAndHook(
+                                    downConfig,
+                                    'finishErr',
+                                    queue.filter(v => !v.resp),
+                                    queue,
+                                    downConfig,
+                                );
+                                return;
+                            }
+
+                            // 全部下载成功，返回结果
+                            downEventAndHook(downConfig, 'end', queue, downConfig);
+
+                            (downResponse as IAxiosDownResponse<Uint8Array>).data = concatUint8Array(
+                                queue.map(v => {
+                                    return v.resp!.data;
+                                }),
+                            );
+
+                            convertResponseType(downResponse, defaultResponseType);
+
+                            downResponse.status = 200;
+                            downResponse.statusText = 'OK';
+                            downResponse.headers['content-type'] = totalContentLength;
+                            resolveAll(downResponse);
                         });
                 });
 
