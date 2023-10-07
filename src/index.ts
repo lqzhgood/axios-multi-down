@@ -60,8 +60,6 @@ function AxiosMultiDown(
             const queue = splitArr(contentLength, downConfigUse.blockSize as number);
             downConfigUse.max = downConfigUse.max <= queue.length ? downConfigUse.max : queue.length;
 
-            downEventAndHook(downConfigUse, 'preDown', queue, downConfigUse);
-
             let r;
             if (downConfigUse.max === 1) {
                 r = await downByOne<T, D>(axios, axiosConfig, downConfigUse);
@@ -164,6 +162,8 @@ function downByOne<T, D>(
     const queue: IBlockData[] = [blockData];
     let downResponse = { isMulti: false, downConfig, queue: queue };
 
+    downEventAndHook(downConfig, 'preDown', queue, downConfig);
+
     return new Promise((resolve, reject) => {
         function fn() {
             return axios<T>(axiosConfig)
@@ -220,6 +220,8 @@ function downByMulti<T = any, D = any>(
     queue: IBlockData[],
     totalContentLength: number,
 ): Promise<IAxiosDownResponse<T>> {
+    downEventAndHook(downConfig, 'preDown', queue, downConfig);
+
     return new Promise((resolveAll, rejectAll) => {
         let downResponse: IAxiosDownResponse<T>;
         const defaultResponseType: ResponseType = axiosConfig.responseType || 'json';
