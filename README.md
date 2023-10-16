@@ -57,14 +57,80 @@ axios
 
 ## Api
 
-#### AxiosMultiDown
+### AxiosMultiDown
 
 ```
 AxiosMultiDown( axios )
 AxiosMultiDown( axios [ , DownConfig ] ) // Global DownConfig
 ```
 
-#### axios.down
+<details>
+<summary>AxiosMultiDown.EventEmitter</summary>
+
+> /src/event.ts
+
+Create a new `event` instance，[Api](./#Event)
+
+</details>
+
+<details>
+<summary>AxiosMultiDown.RetryQueue</summary>
+
+Manually retry the failed queue, typically used in conjunction with `onFinishErr`
+
+```
+AxiosMultiDown.RetryQueue(errQueue: IBlockData[], config: IDownConfig): void;
+```
+
+`RetryQueue` will retry all failed `Blocks` on the instance, not the `Blocks` in the errQueue. The errQueue represents `Blocks` that will be prioritized for execution.
+
+```ts
+// e.g
+
+await axios.down( url , {
+        maxRetries: 10,
+        errMode: AxiosMultiDown.const.ERROR_MODE.WAIT
+        onFinishErr(errorQueue, queue, downConfig) {
+            // The errorQueue contains all failed Blocks for this instance
+
+            // If we don't consider network fluctuations, the return times for each block are consistent.
+            // errorQueue = [ b1, b2, b3, b4, b5, b6, b7, b8]
+            // downConfig = { max:2 }
+
+            AxiosMultiDown.RetryQueue([b3,b4,b5,b6], downConfig);
+            // the retry sequence for RetryQueue will be [b3,b4, b5,b6, b1,b2,b7,b8].
+        },
+    },
+);
+```
+
+</details>
+
+<details>
+<summary>AxiosMultiDown.const.TEST_METHOD</summary>
+
+> DownConfig.testMethod = AxiosMultiDown.const.TEST_METHOD
+
+| Name | Description |
+| ---- | ----------- |
+| HEAD |             |
+| SELF |             |
+
+</details>
+
+<details>
+<summary>AxiosMultiDown.const.ERROR_MODE</summary>
+
+> DownConfig.errMode = AxiosMultiDown.const.ERROR_MODE
+
+| Name   | Description                                                                            |
+| ------ | -------------------------------------------------------------------------------------- |
+| RETURN | Immediate error returned, download aborted                                             |
+| WAIT   | Waiting for manual processing, can be manually retried in conjunction with onFinishErr |
+
+</details>
+
+### axios.down
 
 ```
 axios.down( url )
@@ -76,7 +142,8 @@ axios.down( AxiosRequestConfig , DownConfig )
 axios.down( url , AxiosRequestConfig, DownConfig )
 ```
 
-#### DownConfig
+<details>
+<summary>DownConfig</summary>
 
 > defaultDownConfig => /src/const.ts
 
@@ -123,27 +190,10 @@ axios.down( url , AxiosRequestConfig, DownConfig )
     console.log(resp);
 ```
 
-#### CONST
+</details>
 
-##### TEST_METHOD
-
-> DownConfig.testMethod = AxiosMultiDown.const.TEST_METHOD
-
-| Name | Description |
-| ---- | ----------- |
-| HEAD |             |
-| SELF |             |
-
-##### ERROR_MODE
-
-> DownConfig.errMode = AxiosMultiDown.const.ERROR_MODE
-
-| Name   | Description                                                                            |
-| ------ | -------------------------------------------------------------------------------------- |
-| RETURN | Immediate error returned, download aborted                                             |
-| WAIT   | Waiting for manual processing, can be manually retried in conjunction with onFinishErr |
-
-#### IBlockData
+<details>
+<summary>IBlockData</summary>
 
 ```js
 interface IBlockData {
@@ -155,7 +205,10 @@ interface IBlockData {
 }
 ```
 
-#### IAxiosDownResponse
+</details>
+
+<details>
+<summary>IAxiosDownResponse</summary>
 
 > axios.down(url).then(( resp: IAxiosDownResponse extends AxiosResponse )=>{})
 
@@ -172,11 +225,9 @@ resp = {
 The `...axiosResponse` portion will be overwritten twice
 
 -   in first completed `axios` requests.
--   in last completed `axios` requests,
-    -   other modify
-        -   resp.status = 200;
-        -   resp.statusText = 'OK';
-        -   resp.headers['content-type'] = totalContentLength;
+-   in last completed `axios` requests, - other modify - resp.status = 200; - resp.statusText = 'OK'; - resp.headers['content-type'] = totalContentLength;
+
+</details>
 
 ## Event
 

@@ -57,14 +57,80 @@ axios
 
 ## Api
 
-#### AxiosMultiDown
+### AxiosMultiDown
 
 ```
 AxiosMultiDown( axios )
 AxiosMultiDown( axios [ , DownConfig ] ) // Global DownConfig
 ```
 
-#### axios.down
+<details>
+<summary>AxiosMultiDown.EventEmitter</summary>
+
+> /src/event.ts
+
+new 一个事件实例，[Api](./#%E4%BA%8B%E4%BB%B6)
+
+</details>
+
+<details>
+<summary>AxiosMultiDown.RetryQueue</summary>
+
+手动重试失败队列，一般配合 `onFinishErr` 使用
+
+```
+AxiosMultiDown.RetryQueue(errQueue: IBlockData[], config: IDownConfig): void;
+```
+
+`RetryQueue` 会重试实例上失败的所有 `Block` , 而不是 `errQueue` 中的 `Block`，`errQueue` 仅代表会优先执行的 `Block`
+
+```ts
+// e.g
+
+await axios.down( url , {
+        maxRetries: 10,
+        errMode: AxiosMultiDown.const.ERROR_MODE.WAIT
+        onFinishErr(errorQueue, queue, downConfig) {
+            // errorQueue 中包含这个实例的所有失败 Block
+
+            // 如果不考虑网络波动，每个 block 返回时间一致
+            // errorQueue = [ b1, b2, b3, b4, b5, b6, b7, b8]
+            // downConfig = { max:2 }
+
+            AxiosMultiDown.RetryQueue([b3,b4,b5,b6], downConfig);
+            // 那么 RetryQueue 的重试顺序结果将会是 [b3,b4, b5,b6,  b1,b2,b7,b8]
+        },
+    },
+);
+```
+
+</details>
+
+<details>
+<summary>AxiosMultiDown.const.TEST_METHOD</summary>
+
+> DownConfig.testMethod = AxiosMultiDown.const.TEST_METHOD
+
+| Name | Description |
+| ---- | ----------- |
+| HEAD |             |
+| SELF |             |
+
+</details>
+
+<details>
+<summary>AxiosMultiDown.const.ERROR_MODE</summary>
+
+> DownConfig.errMode = AxiosMultiDown.const.ERROR_MODE
+
+| Name   | Description                                 |
+| ------ | ------------------------------------------- |
+| RETURN | 立即返回错误，下载中止                      |
+| WAIT   | 等待手动处理，可和 onFinishErr 配合手动重试 |
+
+</details>
+
+### axios.down
 
 ```
 axios.down( url )
@@ -76,7 +142,8 @@ axios.down( AxiosRequestConfig , DownConfig )
 axios.down( url , AxiosRequestConfig, DownConfig )
 ```
 
-#### DownConfig
+<details>
+<summary>DownConfig</summary>
 
 > defaultDownConfig => /src/const.ts
 
@@ -111,7 +178,7 @@ axios.down( url , AxiosRequestConfig, DownConfig )
             onFinishErr(errorQueue, queue, downConfig) {
                 // 这将下载所有Block，且每个Block都重试10次以后，手动再重试3次
                 while( retry++ < 3){
-                    axiosMultiDown.RetryQueue(eQ, downConfig);
+                    AxiosMultiDown.RetryQueue(eQ, downConfig);
                 }
             },
         },
@@ -121,27 +188,10 @@ axios.down( url , AxiosRequestConfig, DownConfig )
     console.log(resp);
 ```
 
-##### CONST
+</details>
 
-###### TEST_METHOD
-
-> DownConfig.testMethod = AxiosMultiDown.const.TEST_METHOD
-
-| Name | Description |
-| ---- | ----------- |
-| HEAD |             |
-| SELF |             |
-
-##### ERROR_MODE
-
-> DownConfig.errMode = AxiosMultiDown.const.ERROR_MODE
-
-| Name   | Description                                 |
-| ------ | ------------------------------------------- |
-| RETURN | 立即返回错误，下载中止                      |
-| WAIT   | 等待手动处理，可和 onFinishErr 配合手动重试 |
-
-#### IBlockData
+<details>
+<summary>IBlockData</summary>
 
 ```js
 interface IBlockData {
@@ -153,7 +203,10 @@ interface IBlockData {
 }
 ```
 
-#### IAxiosDownResponse
+</details>
+
+<details>
+<summary>IAxiosDownResponse</summary>
 
 > axios.down(url).then(( resp: IAxiosDownResponse extends AxiosResponse )=>{})
 
@@ -175,6 +228,8 @@ resp = {
         -   resp.status = 200;
         -   resp.statusText = 'OK';
         -   resp.headers['content-type'] = totalContentLength;
+
+</details>
 
 ## 事件
 
