@@ -69,7 +69,7 @@ AxiosMultiDown( axios [ , DownConfig ] ) // Global DownConfig
 
 > /src/event.ts
 
-new 一个事件实例，[Api](./#%E4%BA%8B%E4%BB%B6)
+new 一个事件实例，[Api](./README.zh-hans.md#%E4%BA%8B%E4%BB%B6)
 
 </details>
 
