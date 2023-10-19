@@ -240,14 +240,12 @@
                     <button @click="downConfig.blockSize = 100*1024*1024" :style="{opacity: downConfig.blockSize === 100*1024*1024 ? 1 : 0.5}">10M</button>
                 </label>
                 <br />
-                <label>testMethod: {{downConfig.testMethod}}</label>
+                <label>TEST_METHOD: {{downConfig.testMethod}}</label>
                 <br />
                 <label>
-                    errMode: {{downConfig.errMode}}
+                    ERROR_MODE: {{downConfig.errMode}}
                     <button @click="downConfig.errMode = ERROR_MODE.RETURN" :style="{opacity: downConfig.errMode === ERROR_MODE.RETURN  ? 1 : 0.5 }">RETURN</button>
                     <button @click="downConfig.errMode = ERROR_MODE.WAIT" :style=" {opacity: downConfig.errMode===ERROR_MODE.WAIT ? 1 : 0.5}">WAIT</button>
-
-                    <span style="margin-left: 20px" v-if="this.downConfig.errMode === ERROR_MODE.WAIT">In ERROR_MODE.WAIT, you can click red block to manual retry.</span>
                 </label>
             </fieldset>
         </div>
@@ -266,6 +264,7 @@
         <div id="check" :style="{color: check.target === check.result ? 'green' : 'red'}">
             <div v-if="loading">
                 <span>Downloading... </span>
+                <span style="margin-left: 20px" v-if="this.downConfig.errMode === ERROR_MODE.WAIT">In ERROR_MODE.WAIT, you can click red block to manual retry.</span>
                 <br />
             </div>
             <template v-else>
